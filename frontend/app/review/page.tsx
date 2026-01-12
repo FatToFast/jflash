@@ -624,20 +624,19 @@ function ReviewPageContent() {
             {/* 복습 모드 선택 */}
             <div className="rounded-xl bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-stone-700">복습 모드</h3>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid grid-cols-5 gap-2">
                 {REVIEW_MODES.map((mode) => (
                   <button
                     key={mode.value}
                     onClick={() => setReviewMode(mode.value)}
-                    className={`flex flex-col items-center rounded-xl p-4 transition ${
+                    className={`flex flex-col items-center rounded-xl p-3 transition ${
                       reviewMode === mode.value
                         ? "bg-amber-100 ring-2 ring-amber-500"
                         : "bg-stone-50 hover:bg-stone-100"
                     }`}
                   >
-                    <span className="text-2xl">{mode.icon}</span>
-                    <span className="mt-2 font-medium">{mode.label}</span>
-                    <span className="mt-1 text-xs text-stone-500">{mode.description}</span>
+                    <span className="text-xl">{mode.icon}</span>
+                    <span className="mt-1 text-sm font-medium">{mode.label}</span>
                   </button>
                 ))}
               </div>
