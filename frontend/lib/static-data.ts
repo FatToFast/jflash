@@ -505,6 +505,10 @@ export function getLastSyncTime(): string | null {
 /**
  * Get cards due for review by type
  * Includes mastered items that are due for refresh
+ *
+ * 버그 수정 (2025-01-12):
+ * - 기존: 날짜만 비교 → 오늘 복습해도 같은 날 다시 due로 표시됨
+ * - 수정: FSRS의 isDue() 함수로 정확한 시간 기반 비교
  */
 export async function getDueCards(
   type: VocabType = "word"
@@ -521,13 +525,14 @@ export async function getDueCards(
       : mastered.filter((item) => item.pos === "文");
 
   const allItems = [...active, ...masteredFiltered];
-  const states = getSRSStates();
-  const today = new Date().toISOString().split("T")[0];
+  const fsrsStates = getFSRSStates();
 
   return allItems.filter((item) => {
-    const state = states[item.id];
-    if (!state) return true; // New item
-    return state.next_review.split("T")[0] <= today;
+    const fsrsState = fsrsStates[item.id];
+    if (!fsrsState) return true; // New item - include for review
+
+    // FSRS의 isDue() 함수로 정확한 시간 기반 비교
+    return isDue(fsrsState);
   });
 }
 
@@ -593,8 +598,7 @@ export async function getStatsAsync(): Promise<{
     loadAllMastered(),
   ]);
 
-  const states = getSRSStates();
-  const today = new Date().toISOString().split("T")[0];
+  const fsrsStates = getFSRSStates();
 
   let learned = 0,
     dueToday = 0;
@@ -612,10 +616,10 @@ export async function getStatsAsync(): Promise<{
     byLevel[level] = masteredCache[level].length;
   }
 
-  // Count from SRS states
-  Object.values(states).forEach((state) => {
-    if (state.reps > 0) learned++;
-    if (state.next_review.split("T")[0] <= today) dueToday++;
+  // Count from FSRS states (정확한 시간 기반 비교)
+  Object.values(fsrsStates).forEach((fsrsState) => {
+    if (fsrsState.reps > 0) learned++;
+    if (isDue(fsrsState)) dueToday++;
   });
 
   const masteredWords = mastered.filter((item) => item.pos !== "文").length;
