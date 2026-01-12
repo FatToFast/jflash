@@ -12,6 +12,16 @@ import Link from "next/link";
 import { VocabItem, loadVocabulary, getSRSStates, SRSState } from "@/lib/static-data";
 import { TTS_CONFIG } from "@/lib/constants";
 
+/** 필터 타입 */
+type FilterType = "all" | "words" | "sentences";
+
+/** 필터 옵션 */
+const FILTER_OPTIONS: { value: FilterType; label: string; icon: string }[] = [
+  { value: "all", label: "전체", icon: "📋" },
+  { value: "words", label: "단어", icon: "🎴" },
+  { value: "sentences", label: "문장", icon: "💬" },
+];
+
 /** 정렬 옵션 타입 */
 type SortOption = "priority" | "new" | "learning" | "mastered" | "recent";
 
@@ -32,6 +42,9 @@ export default function VocabPage() {
   // 검색
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // 필터 (전체/단어/문장)
+  const [filterType, setFilterType] = useState<FilterType>("all");
 
   // 정렬
   const [sortOption, setSortOption] = useState<SortOption>("priority");
@@ -71,18 +84,30 @@ export default function VocabPage() {
   // SRS 상태 가져오기
   const srsStates = typeof window !== "undefined" ? getSRSStates() : {};
 
+  // 타입 필터링 (전체/단어/문장)
+  const typeFilteredList = useMemo(() => {
+    switch (filterType) {
+      case "words":
+        return vocabList.filter((v) => v.pos !== "文");
+      case "sentences":
+        return vocabList.filter((v) => v.pos === "文");
+      default:
+        return vocabList;
+    }
+  }, [vocabList, filterType]);
+
   // 검색 필터링
   const filteredList = useMemo(() => {
-    if (!debouncedSearch) return vocabList;
+    if (!debouncedSearch) return typeFilteredList;
 
     const query = debouncedSearch.toLowerCase();
-    return vocabList.filter(
+    return typeFilteredList.filter(
       (v) =>
         v.kanji.toLowerCase().includes(query) ||
         (v.reading && v.reading.toLowerCase().includes(query)) ||
         (v.meaning && v.meaning.toLowerCase().includes(query))
     );
-  }, [vocabList, debouncedSearch]);
+  }, [typeFilteredList, debouncedSearch]);
 
   // 정렬 적용
   const sortedList = useMemo(() => {
@@ -219,8 +244,8 @@ export default function VocabPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex gap-6 text-sm">
               <span>
-                전체 단어:{" "}
-                <strong className="text-amber-600">{vocabList.length}개</strong>
+                {filterType === "all" ? "전체" : filterType === "words" ? "단어" : "문장"}:{" "}
+                <strong className="text-amber-600">{typeFilteredList.length}개</strong>
               </span>
               {debouncedSearch && (
                 <span>
@@ -235,13 +260,36 @@ export default function VocabPage() {
           </div>
         </div>
 
+        {/* 필터 탭 (전체/단어/문장) */}
+        <div className="mb-4 w-full">
+          <div className="flex rounded-xl bg-white p-1 shadow-sm">
+            {FILTER_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  setFilterType(option.value);
+                  setPage(1);
+                }}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                  filterType === option.value
+                    ? "bg-amber-500 text-white shadow-sm"
+                    : "text-stone-600 hover:bg-stone-100"
+                }`}
+              >
+                <span>{option.icon}</span>
+                <span>{option.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* 검색 */}
         <div className="mb-4 w-full">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="한자, 읽기, 의미로 검색..."
+            placeholder={filterType === "sentences" ? "문장, 의미로 검색..." : "한자, 읽기, 의미로 검색..."}
             className="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           />
         </div>
