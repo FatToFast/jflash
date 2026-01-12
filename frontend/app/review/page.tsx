@@ -78,6 +78,14 @@ function ReviewPageContent() {
   // TTS 재생 상태
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  // 셔플 모드 (localStorage에 저장)
+  const [shuffleEnabled, setShuffleEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("jflash_shuffle") === "true";
+    }
+    return false;
+  });
+
   // 현재 카드
   const currentCard = cards[currentIndex];
 
@@ -581,9 +589,24 @@ function ReviewPageContent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [flipCard, handleAnswer, playPronunciation, isFlipped, isAnswering]);
 
+  // Fisher-Yates 셔플 알고리즘
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   // 복습 시작 (이미 loadCards에서 단어/문장 필터링 완료)
   const startSession = () => {
     if (cards.length === 0) return;
+
+    // 셔플 활성화 시 카드 순서 섞기
+    if (shuffleEnabled) {
+      setCards(shuffleArray(cards));
+    }
 
     setCurrentIndex(0);
     setIsFlipped(false);
@@ -591,9 +614,10 @@ function ReviewPageContent() {
     setSessionState("studying");
 
     // 듣기 모드일 경우 첫 카드 자동 재생
-    if (reviewMode === "listening" && cards[0]) {
+    const targetCards = shuffleEnabled ? shuffleArray(cards) : cards;
+    if (reviewMode === "listening" && targetCards[0]) {
       setTimeout(() => {
-        speakJapanese(cards[0].kanji);
+        speakJapanese(targetCards[0].kanji);
       }, 500);
     }
   };
@@ -696,6 +720,32 @@ function ReviewPageContent() {
                     </button>
                   ))}
                 </div>
+
+                {/* 셔플 옵션 */}
+                <div className="mt-4 flex items-center justify-between border-t pt-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🔀</span>
+                    <span className="text-sm font-medium text-stone-700">순서 섞기</span>
+                    <span className="text-xs text-stone-500">(매번 다른 순서로 학습)</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newValue = !shuffleEnabled;
+                      setShuffleEnabled(newValue);
+                      localStorage.setItem("jflash_shuffle", String(newValue));
+                    }}
+                    className={`relative h-7 w-12 rounded-full transition-colors ${
+                      shuffleEnabled ? "bg-amber-500" : "bg-stone-300"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
+                        shuffleEnabled ? "translate-x-5" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </div>
+
                 {reviewMode === "cloze" && clozeAvailableCards.length === 0 && (
                   <p className="mt-3 text-sm text-amber-600">
                     ⚠️ 예문이 있는 카드가 없습니다. 기본 모드를 권장합니다.
