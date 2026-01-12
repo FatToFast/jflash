@@ -6,11 +6,82 @@ J-Flash는 LLM(Claude)을 활용하여 일본어 교재 이미지에서 단어�
 
 ### 아키텍처
 ```
-[Local: 이미지 추출] → [SQLite DB] → [Git Push] → [Web: 복습 전용]
+[이미지] → [Claude 추출] → [JSON 저장] → [Git Push] → [Web 복습]
 ```
 
 - **Full Mode**: 로컬 환경에서 단어 추가/수정/삭제 가능
 - **Lite Mode**: 웹 환경에서 복습만 가능 (읽기 전용)
+
+---
+
+## 이미지 추출 워크플로우 (필수)
+
+사용자가 일본어 교재 이미지를 첨부하면 다음 단계를 **자동으로** 수행합니다.
+
+### Step 1: 모드 판별
+| 사용자 요청 | 모드 | pos 값 |
+|-------------|------|--------|
+| "단어 추출" 또는 이미지만 첨부 | 단어 모드 | 名詞, 動詞, 形容詞 등 |
+| "문장 추출" | 문장 모드 | 文 |
+
+### Step 2: 이미지에서 추출
+- 이미지에 보이는 단어/문장만 추출 (환각 금지)
+- 조사, 조동사 제외
+- 동사는 사전형으로 정규화
+- 예문 필수 (없으면 생성)
+
+### Step 3: JSON 파일에 저장
+
+**저장 위치:**
+```
+frontend/public/data/vocabulary.json
+```
+
+**JSON 스키마:**
+```json
+{
+  "id": 1,
+  "kanji": "食べる",
+  "reading": "たべる",
+  "meaning": "먹다",
+  "pos": "動詞",
+  "jlpt_level": "N5",
+  "example_sentence": "朝ごはんを食べます。",
+  "example_meaning": "아침밥을 먹습니다."
+}
+```
+
+**문장 모드 예시:**
+```json
+{
+  "id": 15,
+  "kanji": "ぼくは学生。",
+  "reading": "ぼくはがくせい。",
+  "meaning": "나는 학생이야.",
+  "pos": "文",
+  "jlpt_level": "N5",
+  "example_sentence": "",
+  "example_meaning": ""
+}
+```
+
+**처리 규칙:**
+1. 기존 JSON 파일 읽기
+2. 마지막 id 확인 후 새 id 부여
+3. 중복 확인 (동일 kanji + reading → 스킵)
+4. 새 항목 추가 후 저장
+
+### Step 4: Git 커밋 & 푸시
+```bash
+git add frontend/public/data/vocabulary.json
+git commit -m "feat: 단어 N개 추가 (출처 정보)"
+git push origin <현재브랜치>
+```
+
+### Step 5: 결과 요약
+추출 완료 후 테이블 형식으로 요약:
+| id | 단어 | 읽기 | 의미 | 품사 |
+|----|------|------|------|------|
 
 ---
 
@@ -119,34 +190,6 @@ J-Flash는 LLM(Claude)을 활용하여 일본어 교재 이미지에서 단어�
 
 ---
 
-## SQL 삽입 템플릿
-
-### 단어 추가
-```sql
-INSERT INTO Vocabulary (
-    kanji, reading, meaning, pos,
-    jlpt_level, example_sentence, example_meaning,
-    source_context, confidence, surface, needs_review
-) VALUES (
-    '勉強する', 'べんきょうする', '공부하다', '動詞',
-    'N5', '毎日日本語を勉強する。', '매일 일본어를 공부한다.',
-    'みんなの日本語 1課', 0.9, '勉強した', 0
-);
-```
-
-### 문법 추가
-```sql
-INSERT INTO Grammar (
-    title, meaning, description,
-    example, example_meaning, level
-) VALUES (
-    '〜は〜です', '~은/는 ~입니다', '명사 술어문의 기본 형태',
-    '私は学生です。', '저는 학생입니다.', 'N5'
-);
-```
-
----
-
 ## 학습 효율 전략
 
 ### A. 신규 단어 제한
@@ -244,63 +287,6 @@ INSERT INTO Grammar (
 | level | TEXT | JLPT 레벨 |
 | similar_patterns | TEXT | 유사 문법 |
 | usage_notes | TEXT | 사용 주의사항 |
-
----
-
-## 추출 프롬프트
-
-이미지를 Claude에 첨부한 후 목적에 맞는 프롬프트를 사용하세요.
-
-### 기본 모드: 단어 추출 (기본값)
-
-```
-이 일본어 교재 이미지에서 단어와 문법을 추출해서 SQL INSERT 문으로 만들어줘.
-
-## 규칙
-1. 이미지에 보이는 단어만 (환각 금지)
-2. 조사(は,が,を,に,で), 조동사(です,ます,た,ない) 제외
-3. 동사는 사전형으로 (食べた → 食べる)
-4. 예문 필수 - 없으면 자연스럽게 생성
-5. 의미는 한국어로
-
-## 출력 형식
-
-### 단어
-INSERT INTO Vocabulary (kanji, reading, meaning, pos, example_sentence, example_meaning, jlpt_level) VALUES
-('食べる', 'たべる', '먹다', '動詞', '朝ごはんを食べる。', '아침밥을 먹는다.', 'N5'),
-('学校', 'がっこう', '학교', '名詞', '学校に行きます。', '학교에 갑니다.', 'N5');
-
-### 문법
-INSERT INTO Grammar (title, explanation, example_jp, example_kr, level) VALUES
-('〜ている', '진행/상태를 나타냄', '本を読んでいる。', '책을 읽고 있다.', 'N4');
-```
-
-### 문장 모드: 문장 암기용 (요청 시만)
-
-문장을 통째로 외우고 싶을 때 사용합니다.
-
-```
-이 일본어 이미지에서 **문장**을 추출해줘. 단어가 아니라 문장 단위로.
-
-## 규칙
-1. 이미지에 보이는 완전한 문장만 추출
-2. 각 문장을 하나의 단어처럼 취급
-3. kanji = 전체 문장, reading = 전체 발음, meaning = 전체 해석
-4. pos = "文" (문장)
-5. example은 비워두거나 문맥 설명
-
-## 출력 형식
-
-INSERT INTO Vocabulary (kanji, reading, meaning, pos, example_sentence, example_meaning, jlpt_level) VALUES
-('私は学生です。', 'わたしはがくせいです。', '저는 학생입니다.', '文', '', '', 'N5'),
-('毎日日本語を勉強しています。', 'まいにちにほんごをべんきょうしています。', '매일 일본어를 공부하고 있습니다.', '文', '', '', 'N4'),
-('明日の天気はどうですか。', 'あしたのてんきはどうですか。', '내일 날씨는 어떻습니까?', '文', '', '', 'N5');
-```
-
-**문장 모드 활용**:
-- 회화 패턴 암기
-- 시험 대비 예문 암기
-- 상황별 표현 학습
 
 ---
 
