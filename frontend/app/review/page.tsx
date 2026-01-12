@@ -5,14 +5,16 @@
  *
  * Vercel 배포용 - localStorage 기반 SRS 상태 관리
  *
- * 복습 모드 4종:
+ * 복습 모드 5종:
  * - normal: 일본어 → 읽기/의미
  * - reverse: 의미 → 일본어/읽기
  * - listening: TTS → 일본어/의미
  * - cloze: 빈칸 예문 → 단어
+ * - sentence: 문장 암기
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   VocabItem,
@@ -50,7 +52,8 @@ interface ReviewStats {
   total_mastered: number;
 }
 
-export default function ReviewPage() {
+function ReviewPageContent() {
+  const searchParams = useSearchParams();
   const [sessionState, setSessionState] = useState<SessionState>("loading");
   const [cards, setCards] = useState<VocabItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -59,8 +62,9 @@ export default function ReviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [isAnswering, setIsAnswering] = useState(false);
 
-  // 복습 모드 상태
-  const [reviewMode, setReviewMode] = useState<ReviewMode>("normal");
+  // URL 파라미터에서 초기 모드 설정 (예: ?mode=sentence)
+  const initialMode = (searchParams.get("mode") as ReviewMode) || "normal";
+  const [reviewMode, setReviewMode] = useState<ReviewMode>(initialMode);
 
   // 세션 결과
   const [sessionResult, setSessionResult] = useState<SessionResult>({
@@ -885,5 +889,26 @@ export default function ReviewPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+/** 로딩 폴백 UI */
+function ReviewPageLoading() {
+  return (
+    <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900 mx-auto"></div>
+        <p className="mt-4 text-stone-600">로딩 중...</p>
+      </div>
+    </div>
+  );
+}
+
+/** Suspense 경계로 감싼 메인 컴포넌트 */
+export default function ReviewPage() {
+  return (
+    <Suspense fallback={<ReviewPageLoading />}>
+      <ReviewPageContent />
+    </Suspense>
   );
 }

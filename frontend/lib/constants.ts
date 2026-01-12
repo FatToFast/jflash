@@ -93,6 +93,7 @@ export type NavItem = {
  */
 const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/review", label: "복습하기", icon: "🎴", style: "primary" },
+  { href: "/review?mode=sentence", label: "문장", icon: "💬", style: "indigo" },
   { href: "/vocab", label: "단어장", icon: "📚", style: "default" },
   { href: "/grammar", label: "문법", icon: "📖", style: "purple" },
   { href: "/stats", label: "통계", icon: "📊", style: "emerald" },
