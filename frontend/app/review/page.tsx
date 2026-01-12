@@ -5,12 +5,14 @@
  *
  * Vercel 배포용 - localStorage 기반 SRS 상태 관리
  *
- * 복습 모드 5종:
- * - normal: 일본어 → 읽기/의미
- * - reverse: 의미 → 일본어/읽기
- * - listening: TTS → 일본어/의미
- * - cloze: 빈칸 예문 → 단어
- * - sentence: 문장 암기
+ * 두 가지 모드:
+ * 1. 단어 복습 (/review): 단어만 (pos≠"文"), 모드 4종
+ *    - normal: 일본어 → 읽기/의미
+ *    - reverse: 의미 → 일본어/읽기
+ *    - listening: TTS → 일본어/의미
+ *    - cloze: 빈칸 예문 → 단어
+ *
+ * 2. 문장 복습 (/review?mode=sentence): 문장만 (pos="文")
  */
 
 import { useState, useEffect, useCallback, Suspense } from "react";
@@ -30,13 +32,12 @@ type SessionState = "loading" | "ready" | "studying" | "complete";
 /** 복습 모드 타입 */
 type ReviewMode = "normal" | "reverse" | "listening" | "cloze" | "sentence";
 
-/** 복습 모드 설정 */
-const REVIEW_MODES: { value: ReviewMode; label: string; icon: string; description: string }[] = [
+/** 단어 복습 모드 설정 (문장 모드 제외) */
+const WORD_REVIEW_MODES: { value: ReviewMode; label: string; icon: string; description: string }[] = [
   { value: "normal", label: "기본", icon: "📖", description: "일본어 → 의미" },
   { value: "reverse", label: "역방향", icon: "🔄", description: "의미 → 일본어" },
   { value: "listening", label: "듣기", icon: "🎧", description: "발음 → 단어" },
   { value: "cloze", label: "빈칸", icon: "✏️", description: "예문 빈칸 채우기" },
-  { value: "sentence", label: "문장", icon: "💬", description: "문장 암기" },
 ];
 
 interface SessionResult {
@@ -79,11 +80,16 @@ function ReviewPageContent() {
   // 현재 카드
   const currentCard = cards[currentIndex];
 
+  // 문장 모드 여부 (URL 파라미터로 결정)
+  const isSentenceMode = reviewMode === "sentence";
+
   // 빈칸 모드용 카드 필터링 (예문 있는 카드만)
   const clozeAvailableCards = cards.filter((c) => c.example_sentence);
 
-  // 문장 모드용 카드 필터링 (pos가 "文"인 카드만)
-  const sentenceCards = cards.filter((c) => c.pos === "文");
+  // 현재 모드에 맞는 복습 모드 목록
+  const availableModes = isSentenceMode
+    ? [{ value: "sentence" as ReviewMode, label: "문장", icon: "💬", description: "문장 암기" }]
+    : WORD_REVIEW_MODES;
 
   /**
    * 빈칸 예문 생성
@@ -353,6 +359,7 @@ function ReviewPageContent() {
   };
 
   // 복습 카드 로드 (Static JSON + localStorage)
+  // 문장 모드면 문장만, 단어 모드면 단어만 로드
   const loadCards = useCallback(async () => {
     setSessionState("loading");
     setError(null);
@@ -365,19 +372,26 @@ function ReviewPageContent() {
       const newCards = await getNewCards(5);
 
       // 복습 카드 + 새 카드 합치기 (중복 제거)
-      const allCards = [...dueCards];
+      let allCards = [...dueCards];
       newCards.forEach(card => {
         if (!allCards.find(c => c.id === card.id)) {
           allCards.push(card);
         }
       });
 
+      // 문장 모드면 문장만, 단어 모드면 단어만 필터링
+      if (isSentenceMode) {
+        allCards = allCards.filter(c => c.pos === "文");
+      } else {
+        allCards = allCards.filter(c => c.pos !== "文");
+      }
+
       // 통계 계산
       const srsStats = getStats();
 
       setCards(allCards);
       setStats({
-        due_now: dueCards.length,
+        due_now: allCards.length,
         due_today: srsStats.dueToday,
         total_learned: srsStats.learned,
         total_mastered: srsStats.mastered,
@@ -388,7 +402,7 @@ function ReviewPageContent() {
       console.error(err);
       setSessionState("ready");
     }
-  }, []);
+  }, [isSentenceMode]);
 
   useEffect(() => {
     loadCards();
@@ -511,20 +525,9 @@ function ReviewPageContent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [flipCard, handleAnswer, playPronunciation, isFlipped, isAnswering]);
 
-  // 복습 시작
+  // 복습 시작 (이미 loadCards에서 단어/문장 필터링 완료)
   const startSession = () => {
-    // 문장 모드일 경우 문장 카드만 필터링
-    let sessionCards = cards;
-    if (reviewMode === "sentence") {
-      sessionCards = cards.filter((c) => c.pos === "文");
-    }
-
-    if (sessionCards.length === 0) return;
-
-    // 문장 모드일 경우 필터링된 카드로 교체
-    if (reviewMode === "sentence") {
-      setCards(sessionCards);
-    }
+    if (cards.length === 0) return;
 
     setCurrentIndex(0);
     setIsFlipped(false);
@@ -532,9 +535,9 @@ function ReviewPageContent() {
     setSessionState("studying");
 
     // 듣기 모드일 경우 첫 카드 자동 재생
-    if (reviewMode === "listening" && sessionCards[0]) {
+    if (reviewMode === "listening" && cards[0]) {
       setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(sessionCards[0].kanji);
+        const utterance = new SpeechSynthesisUtterance(cards[0].kanji);
         utterance.lang = TTS_CONFIG.lang;
         utterance.rate = TTS_CONFIG.rate;
         utterance.pitch = TTS_CONFIG.pitch;
@@ -621,76 +624,69 @@ function ReviewPageContent() {
               </div>
             )}
 
-            {/* 복습 모드 선택 */}
-            <div className="rounded-xl bg-white p-6 shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-stone-700">복습 모드</h3>
-              <div className="grid grid-cols-5 gap-2">
-                {REVIEW_MODES.map((mode) => (
-                  <button
-                    key={mode.value}
-                    onClick={() => setReviewMode(mode.value)}
-                    className={`flex flex-col items-center rounded-xl p-3 transition ${
-                      reviewMode === mode.value
-                        ? "bg-amber-100 ring-2 ring-amber-500"
-                        : "bg-stone-50 hover:bg-stone-100"
-                    }`}
-                  >
-                    <span className="text-xl">{mode.icon}</span>
-                    <span className="mt-1 text-sm font-medium">{mode.label}</span>
-                  </button>
-                ))}
+            {/* 복습 모드 선택 (단어 복습에서만 표시) */}
+            {!isSentenceMode && (
+              <div className="rounded-xl bg-white p-6 shadow-sm">
+                <h3 className="mb-4 text-lg font-semibold text-stone-700">복습 모드</h3>
+                <div className="grid grid-cols-4 gap-2">
+                  {availableModes.map((mode) => (
+                    <button
+                      key={mode.value}
+                      onClick={() => setReviewMode(mode.value)}
+                      className={`flex flex-col items-center rounded-xl p-3 transition ${
+                        reviewMode === mode.value
+                          ? "bg-amber-100 ring-2 ring-amber-500"
+                          : "bg-stone-50 hover:bg-stone-100"
+                      }`}
+                    >
+                      <span className="text-xl">{mode.icon}</span>
+                      <span className="mt-1 text-sm font-medium">{mode.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {reviewMode === "cloze" && clozeAvailableCards.length === 0 && (
+                  <p className="mt-3 text-sm text-amber-600">
+                    ⚠️ 예문이 있는 카드가 없습니다. 기본 모드를 권장합니다.
+                  </p>
+                )}
               </div>
-              {reviewMode === "cloze" && clozeAvailableCards.length === 0 && (
-                <p className="mt-3 text-sm text-amber-600">
-                  ⚠️ 예문이 있는 카드가 없습니다. 기본 모드를 권장합니다.
-                </p>
-              )}
-              {reviewMode === "sentence" && sentenceCards.length === 0 && (
-                <p className="mt-3 text-sm text-amber-600">
-                  ⚠️ 문장 카드(pos=&quot;文&quot;)가 없습니다. 문장을 추가해주세요.
-                </p>
-              )}
-            </div>
+            )}
 
             {/* 복습 시작 버튼 */}
             <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-              {(() => {
-                const availableCards = reviewMode === "sentence" ? sentenceCards.length : cards.length;
-                const modeLabel = reviewMode === "sentence" ? "문장" : "카드";
-                return availableCards > 0 ? (
-                  <>
-                    <p className="text-6xl">{reviewMode === "sentence" ? "💬" : "📚"}</p>
-                    <h2 className="mt-4 text-2xl font-semibold">
-                      오늘의 복습: {availableCards}장 {modeLabel}
-                    </h2>
-                    <p className="mt-2 text-stone-600">
-                      복습할 {modeLabel}가 준비되었습니다.
-                    </p>
-                    <button
-                      onClick={startSession}
-                      className="mt-6 rounded-xl bg-amber-600 px-8 py-4 text-lg font-semibold text-white transition hover:bg-amber-700"
-                    >
-                      복습 시작
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-6xl">🎉</p>
-                    <h2 className="mt-4 text-2xl font-semibold">
-                      오늘 복습할 {modeLabel}가 없습니다
-                    </h2>
-                    <p className="mt-2 text-stone-600">
-                      모든 복습을 완료했거나 아직 {modeLabel}가 없습니다.
-                    </p>
-                    <Link
-                      href="/vocab"
-                      className="mt-6 inline-block rounded-xl border border-amber-600 px-6 py-3 font-semibold text-amber-600 transition hover:bg-amber-50"
-                    >
-                      단어장 보기
-                    </Link>
-                  </>
-                );
-              })()}
+              {cards.length > 0 ? (
+                <>
+                  <p className="text-6xl">{isSentenceMode ? "💬" : "📚"}</p>
+                  <h2 className="mt-4 text-2xl font-semibold">
+                    오늘의 복습: {cards.length}장 {isSentenceMode ? "문장" : "단어"}
+                  </h2>
+                  <p className="mt-2 text-stone-600">
+                    복습할 {isSentenceMode ? "문장" : "단어"}가 준비되었습니다.
+                  </p>
+                  <button
+                    onClick={startSession}
+                    className="mt-6 rounded-xl bg-amber-600 px-8 py-4 text-lg font-semibold text-white transition hover:bg-amber-700"
+                  >
+                    복습 시작
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-6xl">🎉</p>
+                  <h2 className="mt-4 text-2xl font-semibold">
+                    오늘 복습할 {isSentenceMode ? "문장" : "단어"}가 없습니다
+                  </h2>
+                  <p className="mt-2 text-stone-600">
+                    모든 복습을 완료했거나 아직 {isSentenceMode ? "문장" : "단어"}가 없습니다.
+                  </p>
+                  <Link
+                    href="/vocab"
+                    className="mt-6 inline-block rounded-xl border border-amber-600 px-6 py-3 font-semibold text-amber-600 transition hover:bg-amber-50"
+                  >
+                    단어장 보기
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* 단축키 안내 */}
@@ -747,8 +743,8 @@ function ReviewPageContent() {
             >
               {/* 모드 표시 배지 */}
               <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-600">
-                <span>{REVIEW_MODES.find((m) => m.value === reviewMode)?.icon}</span>
-                <span>{REVIEW_MODES.find((m) => m.value === reviewMode)?.label}</span>
+                <span>{availableModes.find((m) => m.value === reviewMode)?.icon}</span>
+                <span>{availableModes.find((m) => m.value === reviewMode)?.label}</span>
               </div>
 
               {/* 앞면/뒷면 렌더링 (모드별) */}
