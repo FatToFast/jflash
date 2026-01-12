@@ -26,7 +26,7 @@ import {
   updateSRS,
   getStats,
 } from "@/lib/static-data";
-import { TTS_CONFIG } from "@/lib/constants";
+import { speakJapanese, initializeVoices } from "@/lib/tts";
 
 type SessionState = "loading" | "ready" | "studying" | "complete";
 
@@ -250,6 +250,18 @@ function ReviewPageContent() {
                 )}
               </div>
             )}
+            {/* Notes 해설 표시 */}
+            {currentCard.notes && (
+              <div className="mt-4 w-full border-t pt-4">
+                <div className="rounded-lg bg-amber-50 p-3 text-left">
+                  {currentCard.notes.split('\n').map((line, i) => (
+                    <p key={i} className="text-sm text-amber-800">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -282,6 +294,18 @@ function ReviewPageContent() {
                     {currentCard.example_meaning}
                   </p>
                 )}
+              </div>
+            )}
+            {/* Notes 해설 표시 */}
+            {currentCard.notes && (
+              <div className="mt-4 w-full border-t pt-4">
+                <div className="rounded-lg bg-amber-50 p-3 text-left">
+                  {currentCard.notes.split('\n').map((line, i) => (
+                    <p key={i} className="text-sm text-amber-800">
+                      {line}
+                    </p>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -318,6 +342,18 @@ function ReviewPageContent() {
                 )}
               </div>
             )}
+            {/* Notes 해설 표시 */}
+            {currentCard.notes && (
+              <div className="mt-4 w-full border-t pt-4">
+                <div className="rounded-lg bg-amber-50 p-3 text-left">
+                  {currentCard.notes.split('\n').map((line, i) => (
+                    <p key={i} className="text-sm text-amber-800">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -346,6 +382,18 @@ function ReviewPageContent() {
                 </button>
               </div>
             )}
+            {/* Notes 해설 표시 */}
+            {currentCard.notes && (
+              <div className="mt-4 w-full border-t pt-4">
+                <div className="rounded-lg bg-amber-50 p-3 text-left">
+                  {currentCard.notes.split('\n').map((line, i) => (
+                    <p key={i} className="text-sm text-amber-800">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -357,6 +405,18 @@ function ReviewPageContent() {
             <p className="text-xl text-stone-700 text-center">
               {currentCard.meaning || <span className="italic text-stone-400">의미 미입력</span>}
             </p>
+            {/* Notes 해설 표시 (문장 모드) */}
+            {currentCard.notes && (
+              <div className="mt-4 w-full border-t pt-4">
+                <div className="rounded-lg bg-amber-50 p-3 text-left">
+                  {currentCard.notes.split('\n').map((line, i) => (
+                    <p key={i} className="text-sm text-amber-800">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
     }
@@ -408,6 +468,11 @@ function ReviewPageContent() {
     loadCards();
   }, [loadCards]);
 
+  // TTS 음성 초기화 (Google 일본어 음성 우선 로드)
+  useEffect(() => {
+    initializeVoices();
+  }, []);
+
   // 카드 뒤집기 (스페이스바 지원)
   const flipCard = useCallback(() => {
     if (sessionState === "studying" && !isFlipped) {
@@ -452,36 +517,27 @@ function ReviewPageContent() {
     [currentCard, currentIndex, cards.length, isAnswering]
   );
 
-  // TTS 발음 재생
+  // TTS 발음 재생 (Google 일본어 음성 사용)
   const playPronunciation = useCallback(() => {
     if (!currentCard || isSpeaking) return;
 
-    const utterance = new SpeechSynthesisUtterance(currentCard.kanji);
-    utterance.lang = TTS_CONFIG.lang;
-    utterance.rate = TTS_CONFIG.rate;
-    utterance.pitch = TTS_CONFIG.pitch;
-
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
-    window.speechSynthesis.speak(utterance);
+    speakJapanese(currentCard.kanji, {
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
   }, [currentCard, isSpeaking]);
 
-  // 예문 TTS 재생
+  // 예문 TTS 재생 (Google 일본어 음성 사용)
   const playExampleSentence = useCallback(() => {
     if (!currentCard?.example_sentence || isSpeaking) return;
 
-    const utterance = new SpeechSynthesisUtterance(currentCard.example_sentence);
-    utterance.lang = TTS_CONFIG.lang;
-    utterance.rate = TTS_CONFIG.rate * 0.9;
-    utterance.pitch = TTS_CONFIG.pitch;
-
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
-    window.speechSynthesis.speak(utterance);
+    speakJapanese(currentCard.example_sentence, {
+      rate: 0.72, // 예문은 조금 더 천천히
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
   }, [currentCard, isSpeaking]);
 
   // 키보드 단축키
@@ -537,11 +593,7 @@ function ReviewPageContent() {
     // 듣기 모드일 경우 첫 카드 자동 재생
     if (reviewMode === "listening" && cards[0]) {
       setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(cards[0].kanji);
-        utterance.lang = TTS_CONFIG.lang;
-        utterance.rate = TTS_CONFIG.rate;
-        utterance.pitch = TTS_CONFIG.pitch;
-        window.speechSynthesis.speak(utterance);
+        speakJapanese(cards[0].kanji);
       }, 500);
     }
   };

@@ -17,7 +17,7 @@ import {
   loadAllVocabulary,
   getSRSStates,
 } from "@/lib/static-data";
-import { TTS_CONFIG } from "@/lib/constants";
+import { speakJapanese, initializeVoices } from "@/lib/tts";
 
 /** 데이터 소스 타입 */
 type DataSource = "active" | "mastered" | "all";
@@ -252,16 +252,14 @@ export default function VocabPage() {
     return <span className="text-xs text-stone-400">새 단어</span>;
   };
 
-  // TTS 발음 재생
-  const playPronunciation = useCallback((text: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
+  // TTS 음성 초기화
+  useEffect(() => {
+    initializeVoices();
+  }, []);
 
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = TTS_CONFIG.lang;
-    utterance.rate = TTS_CONFIG.rate;
-    utterance.pitch = TTS_CONFIG.pitch;
-    window.speechSynthesis.speak(utterance);
+  // TTS 발음 재생 (Google 일본어 음성 사용)
+  const playPronunciation = useCallback((text: string) => {
+    speakJapanese(text);
   }, []);
 
   return (

@@ -7,7 +7,8 @@
     "pos": "動詞",
     "jlpt_level": null,
     "example_sentence": "毎日ご飯を食べます。",
-    "example_meaning": "매일 밥을 먹습니다."
+    "example_meaning": "매일 밥을 먹습니다.",
+    "notes": "【분해】食(먹을 식) + べる(하단활용)\n【문법】~ている: 먹고 있다 (진행)\n【관련】飲む(のむ, 마시다)\n【주의】존경어는 召し上がる(めしあがる)"
   },
   {
     "id": 2,
@@ -17,7 +18,8 @@
     "pos": "名詞",
     "jlpt_level": null,
     "example_sentence": "学校に行きます。",
-    "example_meaning": "학교에 갑니다."
+    "example_meaning": "학교에 갑니다.",
+    "notes": "【분해】学(배울 학) + 校(학교 교)\n【관련】大学(だいがく, 대학), 高校(こうこう, 고등학교), 中学校(ちゅうがっこう, 중학교)"
   },
   {
     "id": 3,
@@ -27,7 +29,8 @@
     "pos": "形容詞",
     "jlpt_level": null,
     "example_sentence": "この家は大きいです。",
-    "example_meaning": "이 집은 큽니다."
+    "example_meaning": "이 집은 큽니다.",
+    "notes": "【분해】大(클 대) + きい(이형용사 어미)\n【관련】反: 小さい(ちいさい, 작은)\n【문법】大きな + 名詞: 큰 ~"
   },
   {
     "id": 4,
@@ -87,7 +90,8 @@
     "pos": "名詞",
     "jlpt_level": null,
     "example_sentence": "父は会社員です。",
-    "example_meaning": "아버지는 회사원입니다."
+    "example_meaning": "아버지는 회사원입니다.",
+    "notes": "【분해】会社(かいしゃ, 회사) + 員(いん, ~원)\n【관련】銀行員(ぎんこういん, 은행원), 店員(てんいん, 점원)"
   },
   {
     "id": 11,
@@ -627,7 +631,8 @@
     "pos": "名詞",
     "jlpt_level": "N5",
     "example_sentence": "銀行でお金をおろします。",
-    "example_meaning": "은행에서 돈을 찾습니다."
+    "example_meaning": "은행에서 돈을 찾습니다.",
+    "notes": "【분해】銀(은 은) + 行(갈 행, 다닐 행)\n【관련】銀行員(ぎんこういん, 은행원), お金(おかね, 돈)"
   },
   {
     "id": 83,
