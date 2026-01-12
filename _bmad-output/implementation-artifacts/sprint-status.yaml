@@ -1,0 +1,109 @@
+# generated: 2026-01-11
+# project: J-Flash
+# project_key: jflash
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-01-11
+project: J-Flash
+project_key: jflash
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # ===== Epic 1: 프로젝트 기반 구축 =====
+  epic-1: done
+  1-1-backend-project-init: done
+  1-2-frontend-project-init: done
+  1-3-database-schema-creation: done
+  epic-1-retrospective: optional
+
+  # ===== Epic 2: 이미지 업로드 및 OCR 처리 =====
+  epic-2: done
+  2-1-image-upload-api: done
+  2-2-ocr-text-recognition: done
+  2-3-morphological-analysis: done
+  2-4-extracted-words-ui: done
+  2-5-manual-correction-interface: done
+  epic-2-retrospective: optional
+
+  # ===== Epic 3: 단어장 관리 =====
+  epic-3: done
+  3-1-word-add: done
+  3-2-word-edit-delete: done
+  3-3-word-search-filter: done
+  3-4-source-image-link: done
+  epic-3-retrospective: optional
+
+  # ===== Epic 4: 플래시카드 복습 시스템 + TTS =====
+  epic-4: done
+  4-1-today-review-cards: done
+  4-2-flashcard-front-back: done
+  4-3-learning-result-input: done
+  4-4-srs-algorithm: done
+  4-5-tts-pronunciation: done
+  4-6-session-complete: done
+  epic-4-retrospective: optional
+
+  # ===== Epic 5: 문법 관리 (v1.1) =====
+  epic-5: done
+  5-1-grammar-add: done
+  5-2-grammar-list-search: done
+  5-3-grammar-level-filter: done
+  epic-5-retrospective: optional
+
+  # ===== Epic 6: 한자 학습 (v1.1) =====
+  epic-6: done
+  6-1-kanji-extraction: done
+  6-2-kanji-readings: done
+  6-3-kanji-details: done
+  epic-6-retrospective: optional
+
+  # ===== Epic 7: 통계 및 대시보드 (v1.2) =====
+  epic-7: done
+  7-1-word-count-progress: done
+  7-2-daily-stats: done
+  7-3-accuracy-graph: done
+  epic-7-retrospective: optional
+
+  # ===== Epic 8: 데이터 내보내기/가져오기 (v1.2) =====
+  epic-8: done
+  8-1-data-export: done
+  8-2-data-import: done
+  epic-8-retrospective: optional
+
+  # ===== Epic 9: NAS 배포 및 외부 접속 (v1.2) =====
+  epic-9: done
+  9-1-docker-containerization: done
+  9-2-db-sync-script: done
+  9-3-external-access-guide: done
+  epic-9-retrospective: optional

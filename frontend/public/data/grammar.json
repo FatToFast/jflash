@@ -1,0 +1,6 @@
+[{"id":1,"title":"~ている","explanation":"진행형 또는 상태를 나타냄","example_jp":"今、本を読んでいる。","example_kr":"지금 책을 읽고 있다.","level":"N4"},
+{"id":2,"title":"~てください","explanation":"~해 주세요 (의뢰 표현)","example_jp":"窓を開けてください。","example_kr":"창문을 열어 주세요.","level":"N5"},
+{"id":3,"title":"これ/それ/あれ","explanation":"지시대명사: これ(이것-화자 가까이), それ(그것-청자 가까이), あれ(저것-둘 다 멀리)","example_jp":"これは本です。それはペンですか。あれは何ですか。","example_kr":"이것은 책입니다. 그것은 펜입니까? 저것은 무엇입니까?","level":"N5"},
+{"id":4,"title":"〜は〜です","explanation":"명사 술어문의 기본 형태. \"~은/는 ~입니다\"를 나타냄","example_jp":"私は学生です。","example_kr":"저는 학생입니다.","level":"N5"},
+{"id":5,"title":"〜は〜ですか","explanation":"명사 술어문의 의문형. \"~은/는 ~입니까?\"를 나타냄","example_jp":"あなたは会社員ですか。","example_kr":"당신은 회사원입니까?","level":"N5"},
+{"id":6,"title":"〜じゃありません","explanation":"명사 술어문의 부정형. \"~이/가 아닙니다\"를 나타냄","example_jp":"私は主婦じゃありません。","example_kr":"저는 주부가 아닙니다.","level":"N5"}]

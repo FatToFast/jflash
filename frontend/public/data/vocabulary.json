@@ -1,0 +1,13 @@
+[{"id":1,"kanji":"食べる","reading":"たべる","meaning":"먹다","pos":"동사","jlpt_level":null,"example_sentence":"毎日ご飯を食べます。","example_meaning":"매일 밥을 먹습니다."},
+{"id":2,"kanji":"学校","reading":"がっこう","meaning":"학교","pos":"명사","jlpt_level":null,"example_sentence":"学校に行きます。","example_meaning":"학교에 갑니다."},
+{"id":3,"kanji":"大きい","reading":"おおきい","meaning":"큰","pos":"형용사","jlpt_level":null,"example_sentence":"この家は大きいです。","example_meaning":"이 집은 큽니다."},
+{"id":4,"kanji":"見る","reading":"みる","meaning":"보다","pos":"동사","jlpt_level":null,"example_sentence":"テレビを見ます。","example_meaning":"텔레비전을 봅니다."},
+{"id":5,"kanji":"勉強","reading":"べんきょう","meaning":"공부","pos":"명사","jlpt_level":null,"example_sentence":"日本語を勉強します。","example_meaning":"일본어를 공부합니다."},
+{"id":7,"kanji":"彼","reading":"かれ","meaning":"남자친구, 그(남성)","pos":"名詞","jlpt_level":"N5","example_sentence":"彼は学生です。","example_meaning":"그는 학생입니다."},
+{"id":8,"kanji":"彼女","reading":"かのじょ","meaning":"여자친구, 그녀","pos":"名詞","jlpt_level":"N5","example_sentence":"彼女は主婦です。","example_meaning":"그녀는 주부입니다."},
+{"id":9,"kanji":"学生","reading":"がくせい","meaning":"학생","pos":"名詞","jlpt_level":null,"example_sentence":"私は学生です。","example_meaning":"저는 학생입니다."},
+{"id":10,"kanji":"会社員","reading":"かいしゃいん","meaning":"회사원","pos":"名詞","jlpt_level":null,"example_sentence":"父は会社員です。","example_meaning":"아버지는 회사원입니다."},
+{"id":11,"kanji":"歌手","reading":"かしゅ","meaning":"가수","pos":"名詞","jlpt_level":null,"example_sentence":"彼女は歌手です。","example_meaning":"그녀는 가수입니다."},
+{"id":12,"kanji":"主婦","reading":"しゅふ","meaning":"주부","pos":"名詞","jlpt_level":null,"example_sentence":"母は主婦です。","example_meaning":"어머니는 주부입니다."},
+{"id":13,"kanji":"私","reading":"わたし","meaning":"나, 저","pos":"名詞","jlpt_level":"N5","example_sentence":"私は日本語を勉強します。","example_meaning":"나는 일본어를 공부합니다."},
+{"id":14,"kanji":"僕","reading":"ぼく","meaning":"나(남성)","pos":"名詞","jlpt_level":null,"example_sentence":"僕は日本人です。","example_meaning":"나는 일본인입니다."}]

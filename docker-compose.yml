@@ -1,0 +1,58 @@
+# J-Flash Docker Compose
+# NAS 배포용 설정 (Epic 9)
+# Usage: docker-compose up -d --build
+
+version: '3.8'
+
+services:
+  # Backend API Server
+  jflash-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jflash-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./backend/uploads:/app/uploads
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=sqlite:///./data/japanese_learning.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - jflash-network
+
+  # Frontend Next.js Server
+  jflash-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://jflash-backend:8000
+    container_name: jflash-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://jflash-backend:8000
+    depends_on:
+      jflash-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - jflash-network
+
+networks:
+  jflash-network:
+    driver: bridge
+
+volumes:
+  jflash-data:
+    driver: local

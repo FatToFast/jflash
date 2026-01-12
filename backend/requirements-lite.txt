@@ -1,0 +1,22 @@
+# J-Flash Backend Dependencies (LITE - Web Deployment)
+# OCR/NLP 제외, 복습 기능만 제공
+# Docker 이미지 크기: ~50MB (vs FULL ~500MB)
+
+# FastAPI core
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# Database
+sqlalchemy>=2.0.25
+aiosqlite>=0.19.0
+
+# Utilities
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+
+# Note: 다음 패키지는 LITE 모드에서 제외됨
+# - easyocr (OCR 엔진)
+# - fugashi, unidic-lite (형태소 분석)
+# - pillow, opencv-python-headless (이미지 처리)

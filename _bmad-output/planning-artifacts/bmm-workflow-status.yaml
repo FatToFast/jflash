@@ -1,0 +1,41 @@
+# BMM Workflow Status
+# Project progress tracking through BMad Method phases
+# Generated: 2026-01-11
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/prd.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2026-01-11"
+project: "J-Flash"
+project_type: "webapp"
+selected_track: "method"
+field_type: "greenfield"
+workflow_path: "method-greenfield.yaml"
+
+workflow_status:
+  # Phase 1: Analysis (Optional)
+  brainstorm-project: skipped
+  research: skipped
+  product-brief: skipped
+
+  # Phase 2: Planning
+  prd: "PRD.md"
+  create-ux-design: skipped
+
+  # Phase 3: Solutioning
+  create-architecture: "ARCHITECTURE.md"
+  create-epics-and-stories: "epics.md"
+  test-design: optional
+  implementation-readiness: "implementation-readiness-report-2026-01-11.md"
+
+  # Phase 4: Implementation
+  sprint-planning: required
