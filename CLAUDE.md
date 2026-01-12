@@ -249,7 +249,9 @@ INSERT INTO Grammar (
 
 ## 추출 프롬프트
 
-이미지를 Claude에 첨부한 후 아래 프롬프트를 사용하세요:
+이미지를 Claude에 첨부한 후 목적에 맞는 프롬프트를 사용하세요.
+
+### 기본 모드: 단어 추출 (기본값)
 
 ```
 이 일본어 교재 이미지에서 단어와 문법을 추출해서 SQL INSERT 문으로 만들어줘.
@@ -272,6 +274,33 @@ INSERT INTO Vocabulary (kanji, reading, meaning, pos, example_sentence, example_
 INSERT INTO Grammar (title, explanation, example_jp, example_kr, level) VALUES
 ('〜ている', '진행/상태를 나타냄', '本を読んでいる。', '책을 읽고 있다.', 'N4');
 ```
+
+### 문장 모드: 문장 암기용 (요청 시만)
+
+문장을 통째로 외우고 싶을 때 사용합니다.
+
+```
+이 일본어 이미지에서 **문장**을 추출해줘. 단어가 아니라 문장 단위로.
+
+## 규칙
+1. 이미지에 보이는 완전한 문장만 추출
+2. 각 문장을 하나의 단어처럼 취급
+3. kanji = 전체 문장, reading = 전체 발음, meaning = 전체 해석
+4. pos = "文" (문장)
+5. example은 비워두거나 문맥 설명
+
+## 출력 형식
+
+INSERT INTO Vocabulary (kanji, reading, meaning, pos, example_sentence, example_meaning, jlpt_level) VALUES
+('私は学生です。', 'わたしはがくせいです。', '저는 학생입니다.', '文', '', '', 'N5'),
+('毎日日本語を勉強しています。', 'まいにちにほんごをべんきょうしています。', '매일 일본어를 공부하고 있습니다.', '文', '', '', 'N4'),
+('明日の天気はどうですか。', 'あしたのてんきはどうですか。', '내일 날씨는 어떻습니까?', '文', '', '', 'N5');
+```
+
+**문장 모드 활용**:
+- 회화 패턴 암기
+- 시험 대비 예문 암기
+- 상황별 표현 학습
 
 ---
 
