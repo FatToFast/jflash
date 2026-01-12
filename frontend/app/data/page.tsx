@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Data Page - Minimal Japanese aesthetic
+ */
+
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
@@ -88,12 +92,11 @@ export default function DataPage() {
       }
 
       setImportResult(result);
-      loadStats(); // Refresh stats after import
+      loadStats();
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || "가져오기 실패");
     } finally {
       setImporting(false);
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -101,22 +104,19 @@ export default function DataPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-gray-600 hover:text-gray-900">
-                ← 홈
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">💾 데이터 관리</h1>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-white">
+      <main className="mx-auto max-w-2xl px-6 py-12">
+        {/* Header */}
+        <header className="mb-12">
+          <Link
+            href="/"
+            className="text-[10px] tracking-[0.3em] text-neutral-400 hover:text-neutral-600 transition-colors"
+          >
+            ← J-FLASH
+          </Link>
+          <h1 className="mt-3 text-lg ">データ</h1>
+        </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Hidden file input */}
         <input
           type="file"
@@ -126,265 +126,254 @@ export default function DataPage() {
           className="hidden"
         />
 
+        {/* Loading */}
+        {loading && (
+          <div className="py-20 text-center">
+            <p className="text-sm text-neutral-400">불러오는 중...</p>
+          </div>
+        )}
+
         {/* Stats */}
         {!loading && stats && (
-          <section className="mb-8">
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">현재 데이터</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <p className="text-3xl font-bold text-blue-600">
-                    {stats.vocabulary_count}
-                  </p>
-                  <p className="text-sm text-blue-700">단어</p>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <p className="text-3xl font-bold text-purple-600">
-                    {stats.grammar_count}
-                  </p>
-                  <p className="text-sm text-purple-700">문법</p>
-                </div>
-              </div>
+          <div className="mb-12 grid grid-cols-2 gap-px bg-neutral-100">
+            <div className="bg-white p-6 text-center">
+              <p className="text-2xl ">{stats.vocabulary_count}</p>
+              <p className="mt-1 text-xs text-neutral-400">단어</p>
             </div>
-          </section>
+            <div className="bg-white p-6 text-center">
+              <p className="text-2xl ">{stats.grammar_count}</p>
+              <p className="mt-1 text-xs text-neutral-400">문법</p>
+            </div>
+          </div>
         )}
 
         {/* Export Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">📤 내보내기</h2>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <p className="text-gray-600 mb-6">
-              데이터를 CSV 또는 JSON 형식으로 내보내 백업하거나 다른 기기에서 사용할 수
-              있습니다.
-            </p>
+        <section className="mb-12">
+          <h2 className="text-sm text-neutral-500 mb-6">내보내기</h2>
 
-            <div className="space-y-4">
-              {/* Vocabulary Export */}
-              <div className="border rounded-lg p-4">
-                <h3 className="font-medium text-gray-800 mb-3">📚 단어장</h3>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleExport(getVocabCsvUrl())}
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                  >
-                    CSV 다운로드
-                  </button>
-                  <button
-                    onClick={() => handleExport(getVocabJsonUrl())}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    JSON 다운로드
-                  </button>
-                </div>
-              </div>
-
-              {/* Grammar Export */}
-              <div className="border rounded-lg p-4">
-                <h3 className="font-medium text-gray-800 mb-3">📖 문법</h3>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleExport(getGrammarCsvUrl())}
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                  >
-                    CSV 다운로드
-                  </button>
-                  <button
-                    onClick={() => handleExport(getGrammarJsonUrl())}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    JSON 다운로드
-                  </button>
-                </div>
-              </div>
-
-              {/* Full Backup */}
-              <div className="border border-amber-200 bg-amber-50 rounded-lg p-4">
-                <h3 className="font-medium text-amber-800 mb-3">
-                  🗃️ 전체 백업 (단어 + 문법)
-                </h3>
+          <div className="space-y-6">
+            {/* Vocabulary Export */}
+            <div className="border-b border-neutral-100 pb-6">
+              <p className="text-sm mb-3">단어장</p>
+              <div className="flex gap-2">
                 <button
-                  onClick={() => handleExport(getFullBackupUrl())}
-                  className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                  onClick={() => handleExport(getVocabCsvUrl())}
+                  className="px-4 py-2 text-xs border border-neutral-200 text-neutral-600 hover:border-neutral-400 transition-colors"
                 >
-                  전체 백업 다운로드 (JSON)
+                  CSV
+                </button>
+                <button
+                  onClick={() => handleExport(getVocabJsonUrl())}
+                  className="px-4 py-2 text-xs border border-neutral-200 text-neutral-600 hover:border-neutral-400 transition-colors"
+                >
+                  JSON
                 </button>
               </div>
+            </div>
+
+            {/* Grammar Export */}
+            <div className="border-b border-neutral-100 pb-6">
+              <p className="text-sm mb-3">문법</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleExport(getGrammarCsvUrl())}
+                  className="px-4 py-2 text-xs border border-neutral-200 text-neutral-600 hover:border-neutral-400 transition-colors"
+                >
+                  CSV
+                </button>
+                <button
+                  onClick={() => handleExport(getGrammarJsonUrl())}
+                  className="px-4 py-2 text-xs border border-neutral-200 text-neutral-600 hover:border-neutral-400 transition-colors"
+                >
+                  JSON
+                </button>
+              </div>
+            </div>
+
+            {/* Full Backup */}
+            <div>
+              <p className="text-sm mb-3">전체 백업</p>
+              <button
+                onClick={() => handleExport(getFullBackupUrl())}
+                className="px-4 py-2 text-xs bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
+              >
+                JSON 다운로드
+              </button>
             </div>
           </div>
         </section>
 
         {/* Import Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">📥 가져오기</h2>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <p className="text-gray-600 mb-4">
-              CSV 또는 JSON 파일에서 데이터를 가져옵니다.
-            </p>
+        <section className="mb-12">
+          <h2 className="text-sm text-neutral-500 mb-6">가져오기</h2>
 
-            {/* Options */}
-            <div className="mb-6">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={skipDuplicates}
-                  onChange={(e) => setSkipDuplicates(e.target.checked)}
-                  className="rounded"
-                />
-                중복 항목 건너뛰기 (이미 존재하는 단어/문법은 가져오지 않음)
-              </label>
-            </div>
+          {/* Options */}
+          <div className="mb-6 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="skipDuplicates"
+              checked={skipDuplicates}
+              onChange={(e) => setSkipDuplicates(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <label htmlFor="skipDuplicates" className="text-xs text-neutral-600">
+              중복 항목 건너뛰기
+            </label>
+          </div>
 
-            <div className="space-y-4">
-              {/* Vocabulary Import */}
-              <div className="border rounded-lg p-4">
-                <h3 className="font-medium text-gray-800 mb-3">📚 단어장</h3>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => triggerImport("vocab-csv")}
-                    disabled={importing}
-                    className="px-4 py-2 border border-green-500 text-green-600 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50"
-                  >
-                    CSV 가져오기
-                  </button>
-                  <button
-                    onClick={() => triggerImport("vocab-json")}
-                    disabled={importing}
-                    className="px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50"
-                  >
-                    JSON 가져오기
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  CSV 형식: kanji, reading, meaning, pos (헤더 필수)
-                </p>
-              </div>
-
-              {/* Grammar Import */}
-              <div className="border rounded-lg p-4">
-                <h3 className="font-medium text-gray-800 mb-3">📖 문법</h3>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => triggerImport("grammar-csv")}
-                    disabled={importing}
-                    className="px-4 py-2 border border-green-500 text-green-600 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50"
-                  >
-                    CSV 가져오기
-                  </button>
-                  <button
-                    onClick={() => triggerImport("grammar-json")}
-                    disabled={importing}
-                    className="px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50"
-                  >
-                    JSON 가져오기
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  CSV 형식: title, meaning, description, example, example_meaning, level
-                </p>
-              </div>
-
-              {/* Full Backup Import */}
-              <div className="border border-amber-200 bg-amber-50 rounded-lg p-4">
-                <h3 className="font-medium text-amber-800 mb-3">
-                  🗃️ 전체 백업 복원
-                </h3>
+          <div className="space-y-6">
+            {/* Vocabulary Import */}
+            <div className="border-b border-neutral-100 pb-6">
+              <p className="text-sm mb-3">단어장</p>
+              <div className="flex gap-2">
                 <button
-                  onClick={() => triggerImport("backup")}
+                  onClick={() => triggerImport("vocab-csv")}
                   disabled={importing}
-                  className="px-4 py-2 border border-amber-500 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-xs border border-neutral-200 text-neutral-600 hover:border-neutral-400 transition-colors disabled:opacity-50"
                 >
-                  백업 파일 가져오기 (JSON)
+                  CSV
+                </button>
+                <button
+                  onClick={() => triggerImport("vocab-json")}
+                  disabled={importing}
+                  className="px-4 py-2 text-xs border border-neutral-200 text-neutral-600 hover:border-neutral-400 transition-colors disabled:opacity-50"
+                >
+                  JSON
                 </button>
               </div>
+              <p className="mt-2 text-[10px] text-neutral-400">
+                CSV: kanji, reading, meaning, pos
+              </p>
             </div>
 
-            {/* Importing indicator */}
-            {importing && (
-              <div className="mt-6 flex items-center gap-3 text-blue-600">
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>
-                <span>가져오는 중...</span>
+            {/* Grammar Import */}
+            <div className="border-b border-neutral-100 pb-6">
+              <p className="text-sm mb-3">문법</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => triggerImport("grammar-csv")}
+                  disabled={importing}
+                  className="px-4 py-2 text-xs border border-neutral-200 text-neutral-600 hover:border-neutral-400 transition-colors disabled:opacity-50"
+                >
+                  CSV
+                </button>
+                <button
+                  onClick={() => triggerImport("grammar-json")}
+                  disabled={importing}
+                  className="px-4 py-2 text-xs border border-neutral-200 text-neutral-600 hover:border-neutral-400 transition-colors disabled:opacity-50"
+                >
+                  JSON
+                </button>
               </div>
-            )}
+              <p className="mt-2 text-[10px] text-neutral-400">
+                CSV: title, meaning, description, example, example_meaning, level
+              </p>
+            </div>
 
-            {/* Import Result */}
-            {importResult && (
-              <div
-                className={`mt-6 p-4 rounded-lg ${
-                  importResult.success ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
-                }`}
+            {/* Full Backup Import */}
+            <div>
+              <p className="text-sm mb-3">백업 복원</p>
+              <button
+                onClick={() => triggerImport("backup")}
+                disabled={importing}
+                className="px-4 py-2 text-xs border border-neutral-900 text-neutral-900 hover:bg-neutral-50 transition-colors disabled:opacity-50"
               >
-                <h4 className="font-medium text-gray-800 mb-2">
-                  {importResult.success ? "✅ 가져오기 완료" : "❌ 가져오기 실패"}
-                </h4>
-                <div className="text-sm text-gray-700 space-y-1">
-                  {importResult.vocabulary_imported > 0 && (
-                    <p>📚 단어: {importResult.vocabulary_imported}개 추가됨</p>
-                  )}
-                  {importResult.vocabulary_skipped > 0 && (
-                    <p className="text-gray-500">
-                      (단어 {importResult.vocabulary_skipped}개 중복으로 건너뜀)
-                    </p>
-                  )}
-                  {importResult.grammar_imported > 0 && (
-                    <p>📖 문법: {importResult.grammar_imported}개 추가됨</p>
-                  )}
-                  {importResult.grammar_skipped > 0 && (
-                    <p className="text-gray-500">
-                      (문법 {importResult.grammar_skipped}개 중복으로 건너뜀)
-                    </p>
-                  )}
-                  {importResult.errors.length > 0 && (
-                    <div className="mt-2 text-red-600">
-                      <p className="font-medium">오류:</p>
-                      <ul className="list-disc list-inside">
-                        {importResult.errors.map((err, idx) => (
-                          <li key={idx}>{err}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Error */}
-            {error && (
-              <div className="mt-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
-                {error}
-              </div>
-            )}
+                JSON 가져오기
+              </button>
+            </div>
           </div>
+
+          {/* Importing indicator */}
+          {importing && (
+            <div className="mt-6 text-sm text-neutral-500">
+              가져오는 중...
+            </div>
+          )}
+
+          {/* Import Result */}
+          {importResult && (
+            <div className={`mt-6 p-4 border ${importResult.success ? "border-neutral-200" : "border-red-200"}`}>
+              <p className="text-sm mb-2">
+                {importResult.success ? "완료" : "실패"}
+              </p>
+              <div className="text-xs text-neutral-600 space-y-1">
+                {importResult.vocabulary_imported > 0 && (
+                  <p>단어: {importResult.vocabulary_imported}개 추가</p>
+                )}
+                {importResult.vocabulary_skipped > 0 && (
+                  <p className="text-neutral-400">
+                    단어 {importResult.vocabulary_skipped}개 건너뜀
+                  </p>
+                )}
+                {importResult.grammar_imported > 0 && (
+                  <p>문법: {importResult.grammar_imported}개 추가</p>
+                )}
+                {importResult.grammar_skipped > 0 && (
+                  <p className="text-neutral-400">
+                    문법 {importResult.grammar_skipped}개 건너뜀
+                  </p>
+                )}
+                {importResult.errors.length > 0 && (
+                  <div className="mt-2 text-red-600">
+                    {importResult.errors.map((err, idx) => (
+                      <p key={idx}>{err}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className="mt-6 p-4 border border-red-200 text-sm text-red-600">
+              {error}
+            </div>
+          )}
         </section>
 
         {/* Format Examples */}
-        <section>
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">📋 파일 형식 예시</h2>
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
-            {/* CSV Example */}
+        <section className="mb-12">
+          <h2 className="text-sm text-neutral-500 mb-6">파일 형식</h2>
+
+          <div className="space-y-6">
             <div>
-              <h3 className="font-medium text-gray-800 mb-2">단어장 CSV 형식</h3>
-              <pre className="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+              <p className="text-xs text-neutral-400 mb-2">단어장 CSV</p>
+              <pre className="bg-neutral-50 p-4 text-xs overflow-x-auto border border-neutral-100">
 {`kanji,reading,meaning,pos
 食べる,たべる,먹다,동사
-飲む,のむ,마시다,동사
-本,ほん,책,명사`}
+飲む,のむ,마시다,동사`}
               </pre>
             </div>
 
-            {/* JSON Example */}
             <div>
-              <h3 className="font-medium text-gray-800 mb-2">단어장 JSON 형식</h3>
-              <pre className="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+              <p className="text-xs text-neutral-400 mb-2">단어장 JSON</p>
+              <pre className="bg-neutral-50 p-4 text-xs overflow-x-auto border border-neutral-100">
 {`{
   "items": [
-    {"kanji": "食べる", "reading": "たべる", "meaning": "먹다", "pos": "동사"},
-    {"kanji": "飲む", "reading": "のむ", "meaning": "마시다", "pos": "동사"}
+    {"kanji": "食べる", "reading": "たべる", "meaning": "먹다", "pos": "동사"}
   ]
 }`}
               </pre>
             </div>
           </div>
         </section>
+
+        {/* Navigation */}
+        <div className="flex gap-3">
+          <Link
+            href="/"
+            className="flex-1 py-3 text-center text-sm border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors"
+          >
+            홈
+          </Link>
+          <Link
+            href="/stats"
+            className="flex-1 py-3 text-center text-sm bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
+          >
+            통계
+          </Link>
+        </div>
       </main>
     </div>
   );

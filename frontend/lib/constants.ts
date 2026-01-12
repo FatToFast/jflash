@@ -68,7 +68,7 @@ export const DEFAULT_REVIEW_LIMIT = 100;
  */
 export const TTS_CONFIG = {
   lang: "ja-JP",
-  rate: 0.8,  // Slower for learning (0.1 - 10, default 1)
+  rate: 1.0,  // Normal speed (0.1 - 10, default 1)
   pitch: 1,   // Default pitch (0 - 2)
 } as const;
 
