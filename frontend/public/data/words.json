@@ -1,0 +1,322 @@
+[
+  {
+    "id": 1,
+    "kanji": "食べる",
+    "reading": "たべる",
+    "meaning": "먹다",
+    "pos": "動詞",
+    "jlpt_level": null,
+    "example_sentence": "毎日ご飯を食べます。",
+    "example_meaning": "매일 밥을 먹습니다."
+  },
+  {
+    "id": 2,
+    "kanji": "学校",
+    "reading": "がっこう",
+    "meaning": "학교",
+    "pos": "名詞",
+    "jlpt_level": null,
+    "example_sentence": "学校に行きます。",
+    "example_meaning": "학교에 갑니다."
+  },
+  {
+    "id": 3,
+    "kanji": "大きい",
+    "reading": "おおきい",
+    "meaning": "큰",
+    "pos": "形容詞",
+    "jlpt_level": null,
+    "example_sentence": "この家は大きいです。",
+    "example_meaning": "이 집은 큽니다."
+  },
+  {
+    "id": 4,
+    "kanji": "見る",
+    "reading": "みる",
+    "meaning": "보다",
+    "pos": "動詞",
+    "jlpt_level": null,
+    "example_sentence": "テレビを見ます。",
+    "example_meaning": "텔레비전을 봅니다."
+  },
+  {
+    "id": 5,
+    "kanji": "勉強",
+    "reading": "べんきょう",
+    "meaning": "공부",
+    "pos": "名詞",
+    "jlpt_level": null,
+    "example_sentence": "日本語を勉強します。",
+    "example_meaning": "일본어를 공부합니다."
+  },
+  {
+    "id": 7,
+    "kanji": "彼",
+    "reading": "かれ",
+    "meaning": "남자친구, 그(남성)",
+    "pos": "名詞",
+    "jlpt_level": "N5",
+    "example_sentence": "彼は学生です。",
+    "example_meaning": "그는 학생입니다."
+  },
+  {
+    "id": 8,
+    "kanji": "彼女",
+    "reading": "かのじょ",
+    "meaning": "여자친구, 그녀",
+    "pos": "名詞",
+    "jlpt_level": "N5",
+    "example_sentence": "彼女は主婦です。",
+    "example_meaning": "그녀는 주부입니다."
+  },
+  {
+    "id": 9,
+    "kanji": "学生",
+    "reading": "がくせい",
+    "meaning": "학생",
+    "pos": "名詞",
+    "jlpt_level": null,
+    "example_sentence": "私は学生です。",
+    "example_meaning": "저는 학생입니다."
+  },
+  {
+    "id": 10,
+    "kanji": "会社員",
+    "reading": "かいしゃいん",
+    "meaning": "회사원",
+    "pos": "名詞",
+    "jlpt_level": null,
+    "example_sentence": "父は会社員です。",
+    "example_meaning": "아버지는 회사원입니다."
+  },
+  {
+    "id": 11,
+    "kanji": "歌手",
+    "reading": "かしゅ",
+    "meaning": "가수",
+    "pos": "名詞",
+    "jlpt_level": null,
+    "example_sentence": "彼女は歌手です。",
+    "example_meaning": "그녀는 가수입니다."
+  },
+  {
+    "id": 12,
+    "kanji": "主婦",
+    "reading": "しゅふ",
+    "meaning": "주부",
+    "pos": "名詞",
+    "jlpt_level": null,
+    "example_sentence": "母は主婦です。",
+    "example_meaning": "어머니는 주부입니다."
+  },
+  {
+    "id": 13,
+    "kanji": "私",
+    "reading": "わたし",
+    "meaning": "나, 저",
+    "pos": "名詞",
+    "jlpt_level": "N5",
+    "example_sentence": "私は日本語を勉強します。",
+    "example_meaning": "나는 일본어를 공부합니다."
+  },
+  {
+    "id": 14,
+    "kanji": "僕",
+    "reading": "ぼく",
+    "meaning": "나(남성)",
+    "pos": "名詞",
+    "jlpt_level": null,
+    "example_sentence": "僕は日本人です。",
+    "example_meaning": "나는 일본인입니다."
+  },
+  {
+    "id": 33,
+    "kanji": "浅草",
+    "reading": "あさくさ",
+    "meaning": "아사쿠사 (도쿄의 관광지)",
+    "pos": "名詞",
+    "jlpt_level": null,
+    "example_sentence": "浅草に行くなら、浅草寺にも行きたいな",
+    "example_meaning": "아사쿠사에 갈 거라면, 센소지에도 가고 싶네"
+  },
+  {
+    "id": 34,
+    "kanji": "浅草寺",
+    "reading": "せんそうじ",
+    "meaning": "센소지 (아사쿠사의 유명한 절)",
+    "pos": "名詞",
+    "jlpt_level": null,
+    "example_sentence": "浅草に行くなら、浅草寺にも行きたいな",
+    "example_meaning": "아사쿠사에 갈 거라면, 센소지에도 가고 싶네"
+  },
+  {
+    "id": 35,
+    "kanji": "遅刻",
+    "reading": "ちこく",
+    "meaning": "지각",
+    "pos": "名詞",
+    "jlpt_level": "N4",
+    "example_sentence": "遅刻したら、罰としてトイレ掃除なんだよ",
+    "example_meaning": "지각하면 벌로 화장실 청소란 말이야"
+  },
+  {
+    "id": 36,
+    "kanji": "罰",
+    "reading": "ばつ",
+    "meaning": "벌",
+    "pos": "名詞",
+    "jlpt_level": "N2",
+    "example_sentence": "遅刻したら、罰としてトイレ掃除なんだよ",
+    "example_meaning": "지각하면 벌로 화장실 청소란 말이야"
+  },
+  {
+    "id": 37,
+    "kanji": "掃除",
+    "reading": "そうじ",
+    "meaning": "청소",
+    "pos": "名詞",
+    "jlpt_level": "N4",
+    "example_sentence": "遅刻したら、罰としてトイレ掃除なんだよ",
+    "example_meaning": "지각하면 벌로 화장실 청소란 말이야"
+  },
+  {
+    "id": 38,
+    "kanji": "緑茶",
+    "reading": "りょくちゃ",
+    "meaning": "녹차",
+    "pos": "名詞",
+    "jlpt_level": "N3",
+    "example_sentence": "緑茶があれば緑茶を飲みます",
+    "example_meaning": "녹차가 있으면 녹차를 마셔요"
+  },
+  {
+    "id": 39,
+    "kanji": "飲む",
+    "reading": "のむ",
+    "meaning": "마시다",
+    "pos": "動詞",
+    "jlpt_level": "N5",
+    "example_sentence": "緑茶があれば緑茶を飲みます",
+    "example_meaning": "녹차가 있으면 녹차를 마셔요"
+  },
+  {
+    "id": 40,
+    "kanji": "年が明ける",
+    "reading": "としがあける",
+    "meaning": "새해가 밝다, 해가 바뀌다",
+    "pos": "動詞",
+    "jlpt_level": "N3",
+    "example_sentence": "年が明けると、家族で書初めをします",
+    "example_meaning": "새해가 밝으면, 가족 다 같이 카키조메를 해요"
+  },
+  {
+    "id": 41,
+    "kanji": "家族",
+    "reading": "かぞく",
+    "meaning": "가족",
+    "pos": "名詞",
+    "jlpt_level": "N5",
+    "example_sentence": "年が明けると、家族で書初めをします",
+    "example_meaning": "새해가 밝으면, 가족 다 같이 카키조메를 해요"
+  },
+  {
+    "id": 42,
+    "kanji": "書初め",
+    "reading": "かきぞめ",
+    "meaning": "새해 첫 붓글씨",
+    "pos": "名詞",
+    "jlpt_level": "N1",
+    "example_sentence": "年が明けると、家族で書初めをします",
+    "example_meaning": "새해가 밝으면, 가족 다 같이 카키조메를 해요"
+  },
+  {
+    "id": 43,
+    "kanji": "参加",
+    "reading": "さんか",
+    "meaning": "참가",
+    "pos": "名詞",
+    "jlpt_level": "N3",
+    "example_sentence": "参加できるかどうか",
+    "example_meaning": "참가할 수 있을지 어떨지"
+  },
+  {
+    "id": 44,
+    "kanji": "断食",
+    "reading": "だんじき",
+    "meaning": "단식",
+    "pos": "名詞",
+    "jlpt_level": "N1",
+    "example_sentence": "断食するしかない",
+    "example_meaning": "단식하는 수밖에 없어"
+  },
+  {
+    "id": 45,
+    "kanji": "有名",
+    "reading": "ゆうめい",
+    "meaning": "유명",
+    "pos": "形容動詞",
+    "jlpt_level": "N5",
+    "example_sentence": "有名なだけじゃなく、とてもおいしいんですよ",
+    "example_meaning": "유명할 뿐만 아니라 아주 맛있거든요"
+  },
+  {
+    "id": 46,
+    "kanji": "孤独",
+    "reading": "こどく",
+    "meaning": "고독",
+    "pos": "名詞",
+    "jlpt_level": "N2",
+    "example_sentence": "クリスマスイブほど孤独を感じる日はないね",
+    "example_meaning": "크리스마스이브만큼 고독을 느끼는 날은 없네"
+  },
+  {
+    "id": 47,
+    "kanji": "感じる",
+    "reading": "かんじる",
+    "meaning": "느끼다",
+    "pos": "動詞",
+    "jlpt_level": "N4",
+    "example_sentence": "クリスマスイブほど孤独を感じる日はないね",
+    "example_meaning": "크리스마스이브만큼 고독을 느끼는 날은 없네"
+  },
+  {
+    "id": 48,
+    "kanji": "頑張る",
+    "reading": "がんばる",
+    "meaning": "열심히 하다, 힘내다",
+    "pos": "動詞",
+    "jlpt_level": "N4",
+    "example_sentence": "いくら頑張っても給料は上がらないし",
+    "example_meaning": "아무리 열심히 해도 월급은 안 오르고"
+  },
+  {
+    "id": 49,
+    "kanji": "給料",
+    "reading": "きゅうりょう",
+    "meaning": "월급, 급료",
+    "pos": "名詞",
+    "jlpt_level": "N3",
+    "example_sentence": "いくら頑張っても給料は上がらないし",
+    "example_meaning": "아무리 열심히 해도 월급은 안 오르고"
+  },
+  {
+    "id": 50,
+    "kanji": "上がる",
+    "reading": "あがる",
+    "meaning": "오르다",
+    "pos": "動詞",
+    "jlpt_level": "N4",
+    "example_sentence": "いくら頑張っても給料は上がらないし",
+    "example_meaning": "아무리 열심히 해도 월급은 안 오르고"
+  },
+  {
+    "id": 51,
+    "kanji": "一緒に",
+    "reading": "いっしょに",
+    "meaning": "함께, 같이",
+    "pos": "副詞",
+    "jlpt_level": "N5",
+    "example_sentence": "ミナも一緒に行こうよ",
+    "example_meaning": "미나도 같이 가자"
+  }
+]

@@ -9,8 +9,25 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { VocabItem, loadVocabulary, getSRSStates, SRSState } from "@/lib/static-data";
+import {
+  VocabItem,
+  loadWords,
+  loadSentences,
+  loadAllMastered,
+  loadAllVocabulary,
+  getSRSStates,
+} from "@/lib/static-data";
 import { TTS_CONFIG } from "@/lib/constants";
+
+/** 데이터 소스 타입 */
+type DataSource = "active" | "mastered" | "all";
+
+/** 데이터 소스 옵션 */
+const DATA_SOURCE_OPTIONS: { value: DataSource; label: string; icon: string }[] = [
+  { value: "active", label: "학습 중", icon: "📖" },
+  { value: "mastered", label: "마스터", icon: "🏆" },
+  { value: "all", label: "전체", icon: "📚" },
+];
 
 /** 필터 타입 */
 type FilterType = "all" | "words" | "sentences";
@@ -38,6 +55,9 @@ export default function VocabPage() {
   const [loading, setLoading] = useState(true);
   const [vocabList, setVocabList] = useState<VocabItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // 데이터 소스 (활성/마스터/전체)
+  const [dataSource, setDataSource] = useState<DataSource>("active");
 
   // 검색
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,7 +87,28 @@ export default function VocabPage() {
     setError(null);
 
     try {
-      const vocab = await loadVocabulary();
+      let vocab: VocabItem[];
+
+      switch (dataSource) {
+        case "active":
+          // 활성 단어/문장만 (words.json + sentences.json)
+          const [words, sentences] = await Promise.all([
+            loadWords(),
+            loadSentences(),
+          ]);
+          vocab = [...words, ...sentences];
+          break;
+        case "mastered":
+          // 마스터된 항목만 (mastered/*.json)
+          vocab = await loadAllMastered();
+          break;
+        case "all":
+        default:
+          // 전체 (활성 + 마스터)
+          vocab = await loadAllVocabulary();
+          break;
+      }
+
       setVocabList(vocab);
     } catch (err) {
       setError("단어 목록을 불러오는데 실패했습니다.");
@@ -75,7 +116,7 @@ export default function VocabPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dataSource]);
 
   useEffect(() => {
     fetchVocab();
@@ -244,6 +285,8 @@ export default function VocabPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex gap-6 text-sm">
               <span>
+                {dataSource === "active" ? "학습 중" : dataSource === "mastered" ? "마스터" : "전체"}
+                {" / "}
                 {filterType === "all" ? "전체" : filterType === "words" ? "단어" : "문장"}:{" "}
                 <strong className="text-amber-600">{typeFilteredList.length}개</strong>
               </span>
@@ -255,8 +298,31 @@ export default function VocabPage() {
               )}
             </div>
             <div className="text-sm text-stone-500">
-              읽기 전용 모드
+              {dataSource === "mastered" ? "마스터 파일" : "읽기 전용 모드"}
             </div>
+          </div>
+        </div>
+
+        {/* 데이터 소스 토글 (학습 중/마스터/전체) */}
+        <div className="mb-4 w-full">
+          <div className="flex rounded-xl bg-white p-1 shadow-sm">
+            {DATA_SOURCE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  setDataSource(option.value);
+                  setPage(1);
+                }}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                  dataSource === option.value
+                    ? "bg-green-500 text-white shadow-sm"
+                    : "text-stone-600 hover:bg-stone-100"
+                }`}
+              >
+                <span>{option.icon}</span>
+                <span>{option.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 

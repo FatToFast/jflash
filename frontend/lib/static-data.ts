@@ -4,6 +4,11 @@
  * 하이브리드 저장소 (간단 버전):
  * - localStorage: 항상 사용 (오프라인 지원)
  * - Supabase: 설정 시 자동 동기화 (로그인 불필요)
+ *
+ * 파일 구조:
+ * - words.json: 학습 중인 단어
+ * - sentences.json: 학습 중인 문장
+ * - mastered/N5.json ~ N1.json, unknown.json: 마스터된 항목 (JLPT 레벨별)
  */
 
 import {
@@ -24,6 +29,7 @@ export interface VocabItem {
   jlpt_level: string | null;
   example_sentence: string | null;
   example_meaning: string | null;
+  notes?: string;
 }
 
 export interface GrammarItem {
@@ -43,22 +49,211 @@ export interface SRSState {
   reps: number;
 }
 
+export type VocabType = "word" | "sentence";
+export type JlptLevel = "N5" | "N4" | "N3" | "N2" | "N1" | "unknown";
+
 // LocalStorage Keys
 const SRS_STORAGE_KEY = "jflash_srs_state";
 const LAST_SYNC_KEY = "jflash_last_sync";
 
 // Cache
-let vocabCache: VocabItem[] | null = null;
+let wordsCache: VocabItem[] | null = null;
+let sentencesCache: VocabItem[] | null = null;
+let masteredCache: Record<JlptLevel, VocabItem[]> = {
+  N5: [],
+  N4: [],
+  N3: [],
+  N2: [],
+  N1: [],
+  unknown: [],
+};
+let masteredLoaded = false;
 let grammarCache: GrammarItem[] | null = null;
 
+const JLPT_LEVELS: JlptLevel[] = ["N5", "N4", "N3", "N2", "N1", "unknown"];
+
+// Supabase vocabulary cache
+let supabaseVocabCache: VocabItem[] | null = null;
+let supabaseVocabLoaded = false;
+
+// ============================================
+// Supabase Vocabulary Loaders (Optional)
+// ============================================
+
 /**
- * Load vocabulary from static JSON
+ * Load all vocabulary from Supabase
+ * Falls back to JSON files if Supabase fails
+ */
+export async function loadVocabFromSupabase(): Promise<VocabItem[]> {
+  if (supabaseVocabLoaded && supabaseVocabCache) {
+    return supabaseVocabCache;
+  }
+
+  if (!isSupabaseEnabled()) {
+    return loadAllVocabulary();
+  }
+
+  try {
+    const { supabase } = await import("./supabase");
+    if (!supabase) {
+      return loadAllVocabulary();
+    }
+
+    const { data, error } = await supabase
+      .from("vocabulary")
+      .select("*")
+      .order("id");
+
+    if (error) {
+      console.warn("Supabase vocab fetch failed, using JSON:", error.message);
+      return loadAllVocabulary();
+    }
+
+    supabaseVocabCache = data || [];
+    supabaseVocabLoaded = true;
+    return supabaseVocabCache;
+  } catch (err) {
+    console.warn("Supabase vocab error, using JSON:", err);
+    return loadAllVocabulary();
+  }
+}
+
+/**
+ * Load active vocabulary from Supabase (status = 'active')
+ */
+export async function loadActiveFromSupabase(): Promise<VocabItem[]> {
+  const vocab = await loadVocabFromSupabase();
+  // If loaded from Supabase, filter by status
+  // If fallback to JSON, all items are considered active
+  return vocab.filter((v) => (v as { status?: string }).status !== "mastered");
+}
+
+/**
+ * Load mastered vocabulary from Supabase (status = 'mastered')
+ */
+export async function loadMasteredFromSupabase(): Promise<VocabItem[]> {
+  const vocab = await loadVocabFromSupabase();
+  return vocab.filter((v) => (v as { status?: string }).status === "mastered");
+}
+
+/**
+ * Clear Supabase vocabulary cache
+ */
+export function clearSupabaseVocabCache(): void {
+  supabaseVocabCache = null;
+  supabaseVocabLoaded = false;
+}
+
+// ============================================
+// Data Loaders (JSON - Default)
+// ============================================
+
+/**
+ * Load active words from static JSON
+ */
+export async function loadWords(): Promise<VocabItem[]> {
+  if (wordsCache) return wordsCache;
+  try {
+    const response = await fetch("/data/words.json");
+    if (!response.ok) return [];
+    wordsCache = await response.json();
+    return wordsCache!;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Load active sentences from static JSON
+ */
+export async function loadSentences(): Promise<VocabItem[]> {
+  if (sentencesCache) return sentencesCache;
+  try {
+    const response = await fetch("/data/sentences.json");
+    if (!response.ok) return [];
+    sentencesCache = await response.json();
+    return sentencesCache!;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Load mastered items for a specific JLPT level
+ */
+export async function loadMastered(level: JlptLevel): Promise<VocabItem[]> {
+  if (masteredLoaded) return masteredCache[level];
+  await loadAllMastered();
+  return masteredCache[level];
+}
+
+/**
+ * Load all mastered items from all JLPT level files
+ */
+export async function loadAllMastered(): Promise<VocabItem[]> {
+  if (masteredLoaded) {
+    return Object.values(masteredCache).flat();
+  }
+
+  const promises = JLPT_LEVELS.map(async (level) => {
+    try {
+      const response = await fetch(`/data/mastered/${level}.json`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      masteredCache[level] = data;
+      return data;
+    } catch {
+      return [];
+    }
+  });
+
+  const results = await Promise.all(promises);
+  masteredLoaded = true;
+  return results.flat();
+}
+
+/**
+ * Load all words (active + mastered)
+ */
+export async function loadAllWords(): Promise<VocabItem[]> {
+  const [active, mastered] = await Promise.all([
+    loadWords(),
+    loadAllMastered(),
+  ]);
+  const masteredWords = mastered.filter((item) => item.pos !== "文");
+  return [...active, ...masteredWords];
+}
+
+/**
+ * Load all sentences (active + mastered)
+ */
+export async function loadAllSentences(): Promise<VocabItem[]> {
+  const [active, mastered] = await Promise.all([
+    loadSentences(),
+    loadAllMastered(),
+  ]);
+  const masteredSentences = mastered.filter((item) => item.pos === "文");
+  return [...active, ...masteredSentences];
+}
+
+/**
+ * Load all vocabulary (words + sentences + mastered)
+ */
+export async function loadAllVocabulary(): Promise<VocabItem[]> {
+  const [words, sentences, mastered] = await Promise.all([
+    loadWords(),
+    loadSentences(),
+    loadAllMastered(),
+  ]);
+  return [...words, ...sentences, ...mastered];
+}
+
+/**
+ * @deprecated Use loadWords(), loadSentences(), or loadAllVocabulary() instead
+ * Kept for backward compatibility
  */
 export async function loadVocabulary(): Promise<VocabItem[]> {
-  if (vocabCache) return vocabCache;
-  const response = await fetch("/data/vocabulary.json");
-  vocabCache = await response.json();
-  return vocabCache!;
+  return loadAllVocabulary();
 }
 
 /**
@@ -70,6 +265,10 @@ export async function loadGrammar(): Promise<GrammarItem[]> {
   grammarCache = await response.json();
   return grammarCache!;
 }
+
+// ============================================
+// SRS State Management
+// ============================================
 
 /**
  * Get SRS states from localStorage
@@ -214,32 +413,57 @@ export function getLastSyncTime(): string | null {
   return localStorage.getItem(LAST_SYNC_KEY);
 }
 
+// ============================================
+// Card Selection
+// ============================================
+
 /**
- * Get cards due for review
+ * Get cards due for review by type
+ * Includes mastered items that are due for refresh
  */
-export async function getDueCards(): Promise<VocabItem[]> {
-  const vocab = await loadVocabulary();
+export async function getDueCards(
+  type: VocabType = "word"
+): Promise<VocabItem[]> {
+  const [active, mastered] = await Promise.all([
+    type === "word" ? loadWords() : loadSentences(),
+    loadAllMastered(),
+  ]);
+
+  // Filter mastered by type
+  const masteredFiltered =
+    type === "word"
+      ? mastered.filter((item) => item.pos !== "文")
+      : mastered.filter((item) => item.pos === "文");
+
+  const allItems = [...active, ...masteredFiltered];
   const states = getSRSStates();
   const today = new Date().toISOString().split("T")[0];
 
-  return vocab.filter((item) => {
+  return allItems.filter((item) => {
     const state = states[item.id];
-    if (!state) return true;
+    if (!state) return true; // New item
     return state.next_review.split("T")[0] <= today;
   });
 }
 
 /**
- * Get new cards (never reviewed)
+ * Get new cards (never reviewed) by type
  */
-export async function getNewCards(limit: number = 10): Promise<VocabItem[]> {
-  const vocab = await loadVocabulary();
+export async function getNewCards(
+  type: VocabType = "word",
+  limit: number = 10
+): Promise<VocabItem[]> {
+  const vocab = type === "word" ? await loadWords() : await loadSentences();
   const states = getSRSStates();
   return vocab.filter((item) => !states[item.id]).slice(0, limit);
 }
 
+// ============================================
+// Statistics
+// ============================================
+
 /**
- * Get statistics
+ * Get statistics (sync version - uses only localStorage)
  */
 export function getStats() {
   if (typeof window === "undefined") {
@@ -263,10 +487,85 @@ export function getStats() {
 }
 
 /**
+ * Get comprehensive statistics (async - loads all files)
+ */
+export async function getStatsAsync(): Promise<{
+  total: number;
+  totalWords: number;
+  totalSentences: number;
+  activeWords: number;
+  activeSentences: number;
+  masteredCount: number;
+  learned: number;
+  dueToday: number;
+  byLevel: Record<JlptLevel, number>;
+}> {
+  const [words, sentences, mastered] = await Promise.all([
+    loadWords(),
+    loadSentences(),
+    loadAllMastered(),
+  ]);
+
+  const states = getSRSStates();
+  const today = new Date().toISOString().split("T")[0];
+
+  let learned = 0,
+    dueToday = 0;
+  const byLevel: Record<JlptLevel, number> = {
+    N5: 0,
+    N4: 0,
+    N3: 0,
+    N2: 0,
+    N1: 0,
+    unknown: 0,
+  };
+
+  // Count mastered by level
+  for (const level of JLPT_LEVELS) {
+    byLevel[level] = masteredCache[level].length;
+  }
+
+  // Count from SRS states
+  Object.values(states).forEach((state) => {
+    if (state.reps > 0) learned++;
+    if (state.next_review.split("T")[0] <= today) dueToday++;
+  });
+
+  const masteredWords = mastered.filter((item) => item.pos !== "文").length;
+  const masteredSentences = mastered.filter((item) => item.pos === "文").length;
+
+  return {
+    total: words.length + sentences.length + mastered.length,
+    totalWords: words.length + masteredWords,
+    totalSentences: sentences.length + masteredSentences,
+    activeWords: words.length,
+    activeSentences: sentences.length,
+    masteredCount: mastered.length,
+    learned,
+    dueToday,
+    byLevel,
+  };
+}
+
+/**
  * Clear all SRS data
  */
 export function clearSRSData(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(SRS_STORAGE_KEY);
   localStorage.removeItem(LAST_SYNC_KEY);
+}
+
+/**
+ * Clear cache (useful for testing or forcing reload)
+ */
+export function clearCache(): void {
+  wordsCache = null;
+  sentencesCache = null;
+  masteredCache = { N5: [], N4: [], N3: [], N2: [], N1: [], unknown: [] };
+  masteredLoaded = false;
+  grammarCache = null;
+  // Clear Supabase cache too
+  supabaseVocabCache = null;
+  supabaseVocabLoaded = false;
 }

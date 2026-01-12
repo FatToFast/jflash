@@ -1,0 +1,16 @@
+{
+  "name": "jflash",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "split": "npx tsx scripts/split-vocabulary.ts",
+    "archive": "npx tsx scripts/archive-mastered.ts",
+    "sync:supabase": "npx tsx scripts/sync-to-supabase.ts",
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "@types/node": "^20"
+  }
+}

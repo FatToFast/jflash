@@ -8,7 +8,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { loadVocabulary, getStats, getSRSStates, VocabItem, SRSState } from "@/lib/static-data";
+import {
+  loadWords,
+  loadSentences,
+  loadAllMastered,
+  loadAllVocabulary,
+  getStats,
+  getSRSStates,
+  VocabItem,
+} from "@/lib/static-data";
 import { JLPT_LEVELS, JLPT_LEVEL_COLORS, POS_OPTIONS } from "@/lib/constants";
 
 interface StatsData {
@@ -17,6 +25,10 @@ interface StatsData {
   mastered_words: number;
   due_today: number;
   new_words: number;
+  // 파일 기반 통계
+  activeWords: number;
+  activeSentences: number;
+  masteredFileCount: number;
 }
 
 interface JLPTStats {
@@ -50,7 +62,14 @@ export default function StatsPage() {
     const loadAllStats = async () => {
       setLoading(true);
       try {
-        const vocab = await loadVocabulary();
+        // 파일별로 로드
+        const [words, sentences, mastered] = await Promise.all([
+          loadWords(),
+          loadSentences(),
+          loadAllMastered(),
+        ]);
+
+        const vocab = [...words, ...sentences, ...mastered];
         const srsStats = getStats();
         const srsStates = getSRSStates();
 
@@ -63,10 +82,15 @@ export default function StatsPage() {
           mastered_words: srsStats.mastered,
           due_today: srsStats.dueToday,
           new_words: newWords,
+          // 파일 기반 통계
+          activeWords: words.length,
+          activeSentences: sentences.length,
+          masteredFileCount: mastered.length,
         });
 
-        // 문장 카드 수
-        setSentenceCount(vocab.filter((v) => v.pos === "文").length);
+        // 문장 카드 수 (활성 + 마스터)
+        const masteredSentences = mastered.filter((v) => v.pos === "文").length;
+        setSentenceCount(sentences.length + masteredSentences);
 
         // JLPT 레벨별 통계
         const jlptData: JLPTStats[] = JLPT_LEVELS.map((level) => {
@@ -215,6 +239,30 @@ export default function StatsPage() {
               icon="📝"
               color="red"
             />
+          </div>
+        </section>
+
+        {/* File-based Stats */}
+        <section className="mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h3 className="font-semibold text-gray-700 mb-3">파일 기반 현황</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-blue-50 rounded-lg p-4 text-center">
+                <p className="text-3xl font-bold text-blue-600">{stats.activeWords}</p>
+                <p className="text-sm text-blue-700">활성 단어</p>
+                <p className="text-xs text-blue-500 mt-1">words.json</p>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-4 text-center">
+                <p className="text-3xl font-bold text-purple-600">{stats.activeSentences}</p>
+                <p className="text-sm text-purple-700">활성 문장</p>
+                <p className="text-xs text-purple-500 mt-1">sentences.json</p>
+              </div>
+              <div className="bg-green-50 rounded-lg p-4 text-center">
+                <p className="text-3xl font-bold text-green-600">{stats.masteredFileCount}</p>
+                <p className="text-sm text-green-700">마스터 파일</p>
+                <p className="text-xs text-green-500 mt-1">mastered/*.json</p>
+              </div>
+            </div>
           </div>
         </section>
 

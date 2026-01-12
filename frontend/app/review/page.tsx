@@ -20,6 +20,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   VocabItem,
+  VocabType,
   getDueCards,
   getNewCards,
   updateSRS,
@@ -368,26 +369,22 @@ function ReviewPageContent() {
     setError(null);
 
     try {
-      // 정적 JSON에서 카드 로드
-      const dueCards = await getDueCards();
+      // 타입 결정: 문장 모드면 "sentence", 아니면 "word"
+      const vocabType: VocabType = isSentenceMode ? "sentence" : "word";
+
+      // 정적 JSON에서 카드 로드 (타입별로 필터링됨)
+      const dueCards = await getDueCards(vocabType);
 
       // 새 카드도 일부 포함 (최대 5개)
-      const newCards = await getNewCards(5);
+      const newCards = await getNewCards(vocabType, 5);
 
       // 복습 카드 + 새 카드 합치기 (중복 제거)
-      let allCards = [...dueCards];
+      const allCards = [...dueCards];
       newCards.forEach(card => {
         if (!allCards.find(c => c.id === card.id)) {
           allCards.push(card);
         }
       });
-
-      // 문장 모드면 문장만, 단어 모드면 단어만 필터링
-      if (isSentenceMode) {
-        allCards = allCards.filter(c => c.pos === "文");
-      } else {
-        allCards = allCards.filter(c => c.pos !== "文");
-      }
 
       // 통계 계산
       const srsStats = getStats();
