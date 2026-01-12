@@ -9,6 +9,10 @@
  * - words.json: 학습 중인 단어
  * - sentences.json: 학습 중인 문장
  * - mastered/N5.json ~ N1.json, unknown.json: 마스터된 항목 (JLPT 레벨별)
+ *
+ * SRS 알고리즘: FSRS (Free Spaced Repetition Scheduler)
+ * - SM-2 대체 (2024년~)
+ * - Ebbinghaus 망각곡선 기반 과학적 복습 간격
  */
 
 import {
@@ -16,8 +20,24 @@ import {
   getDeviceId,
   fetchFromCloud,
   saveToCloud,
-  saveSingleRecord,
 } from "./supabase";
+
+import {
+  FSRSState,
+  getFSRSStates,
+  saveFSRSState,
+  saveAllFSRSStates,
+  initFSRSState,
+  updateFSRSByQuality,
+  isDue,
+  isMastered,
+  getFSRSStats,
+  migrateAllFromSM2,
+  migrateSM2ToFSRS,
+  clearFSRSData,
+  Rating,
+  qualityToRating,
+} from "./fsrs";
 
 // Types
 export interface VocabItem {
@@ -41,20 +61,71 @@ export interface GrammarItem {
   level: string | null;
 }
 
+/**
+ * SRS State Interface
+ * FSRS 기반으로 변경됨 (SM-2 대체)
+ * 호환성을 위해 기존 필드도 유지
+ */
 export interface SRSState {
+  vocab_id: number;
+  // FSRS 필드 (기본)
+  due: string; // 다음 복습일 (ISO string)
+  stability: number; // 기억 안정성 (일수)
+  difficulty: number; // 난이도 (1-10)
+  reps: number; // 복습 횟수
+  lapses: number; // 실패 횟수
+  state: number; // FSRS State enum
+  // 호환성 필드 (레거시)
+  interval: number; // scheduled_days와 동일
+  ease_factor: number; // deprecated, 호환성용
+  next_review: string; // due와 동일
+}
+
+/**
+ * FSRSState를 SRSState로 변환 (호환성 레이어)
+ */
+function fsrsToSRSState(fsrs: FSRSState): SRSState {
+  return {
+    vocab_id: fsrs.vocab_id,
+    due: fsrs.due,
+    stability: fsrs.stability,
+    difficulty: fsrs.difficulty,
+    reps: fsrs.reps,
+    lapses: fsrs.lapses,
+    state: fsrs.state,
+    // 레거시 호환성
+    interval: fsrs.scheduled_days,
+    ease_factor: 2.5, // 기본값 (더 이상 사용되지 않음)
+    next_review: fsrs.due,
+  };
+}
+
+/**
+ * FSRSState를 Supabase용 레거시 형식으로 변환
+ */
+function fsrsToSupabaseFormat(fsrs: FSRSState): {
   vocab_id: number;
   interval: number;
   ease_factor: number;
   next_review: string;
   reps: number;
+} {
+  return {
+    vocab_id: fsrs.vocab_id,
+    interval: fsrs.scheduled_days,
+    ease_factor: 2.5,
+    next_review: fsrs.due,
+    reps: fsrs.reps,
+  };
 }
 
 export type VocabType = "word" | "sentence";
 export type JlptLevel = "N5" | "N4" | "N3" | "N2" | "N1" | "unknown";
 
 // LocalStorage Keys
-const SRS_STORAGE_KEY = "jflash_srs_state";
 const LAST_SYNC_KEY = "jflash_last_sync";
+// SM-2 키는 마이그레이션 후 삭제됨
+const LEGACY_SRS_STORAGE_KEY = "jflash_srs_state";
 
 // Cache
 let wordsCache: VocabItem[] | null = null;
@@ -267,105 +338,108 @@ export async function loadGrammar(): Promise<GrammarItem[]> {
 }
 
 // ============================================
-// SRS State Management
+// SRS State Management (FSRS 기반)
 // ============================================
 
 /**
- * Get SRS states from localStorage
+ * Get SRS states from localStorage (FSRS 래퍼)
  */
 export function getSRSStates(): Record<number, SRSState> {
-  if (typeof window === "undefined") return {};
-  const stored = localStorage.getItem(SRS_STORAGE_KEY);
-  if (!stored) return {};
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return {};
+  const fsrsStates = getFSRSStates();
+  const result: Record<number, SRSState> = {};
+  for (const [id, fsrs] of Object.entries(fsrsStates)) {
+    result[parseInt(id)] = fsrsToSRSState(fsrs);
   }
+  return result;
 }
 
 /**
- * Save all SRS states to localStorage
- */
-function saveAllSRSStates(states: Record<number, SRSState>): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(SRS_STORAGE_KEY, JSON.stringify(states));
-}
-
-/**
- * Save single SRS state
+ * Save single SRS state (FSRS 래퍼)
+ * @deprecated FSRS를 직접 사용하세요
  */
 export function saveSRSState(vocabId: number, state: SRSState): void {
-  if (typeof window === "undefined") return;
-  const states = getSRSStates();
-  states[vocabId] = state;
-  localStorage.setItem(SRS_STORAGE_KEY, JSON.stringify(states));
+  // FSRS 상태로 변환하여 저장
+  const fsrsState: FSRSState = {
+    vocab_id: state.vocab_id,
+    due: state.due || state.next_review,
+    stability: state.stability || state.interval,
+    difficulty: state.difficulty || 5,
+    elapsed_days: 0,
+    scheduled_days: state.interval,
+    learning_steps: 0,
+    reps: state.reps,
+    lapses: state.lapses || 0,
+    state: state.state || 0,
+    last_review: null,
+  };
+  saveFSRSState(vocabId, fsrsState);
 }
 
 /**
- * Initialize SRS state for a vocab item
+ * Initialize SRS state for a vocab item (FSRS 래퍼)
  */
 export function initSRSState(vocabId: number): SRSState {
-  const states = getSRSStates();
-  if (states[vocabId]) return states[vocabId];
-
-  const newState: SRSState = {
-    vocab_id: vocabId,
-    interval: 1,
-    ease_factor: 2.5,
-    next_review: new Date().toISOString(),
-    reps: 0,
-  };
-  saveSRSState(vocabId, newState);
-  return newState;
+  const fsrsState = initFSRSState(vocabId);
+  return fsrsToSRSState(fsrsState);
 }
 
 /**
- * SM-2 Algorithm: Update SRS state
+ * FSRS Algorithm: Update SRS state
+ *
+ * SM-2의 quality (0-5) 입력을 FSRS Rating으로 변환하여 처리
+ * - quality < 2 → Again (틀림)
+ * - quality = 2 → Hard (어려움)
+ * - quality = 3 → Good (적당함)
+ * - quality >= 4 → Easy (쉬움)
  */
 export async function updateSRS(
   vocabId: number,
   quality: number
 ): Promise<SRSState> {
-  const state = initSRSState(vocabId);
-
-  if (quality < 2) {
-    state.reps = 0;
-    state.interval = 1;
-    state.ease_factor = Math.max(1.3, state.ease_factor - 0.2);
-  } else {
-    state.reps += 1;
-    if (state.reps === 1) {
-      state.interval = 1;
-    } else if (state.reps === 2) {
-      state.interval = 3;
-    } else {
-      state.interval = Math.round(state.interval * state.ease_factor);
-    }
-    state.ease_factor = Math.max(
-      1.3,
-      state.ease_factor + (0.1 - (4 - quality) * (0.08 + (4 - quality) * 0.02))
-    );
-  }
-
-  const nextDate = new Date();
-  nextDate.setDate(nextDate.getDate() + state.interval);
-  state.next_review = nextDate.toISOString();
-
-  // Save locally
-  saveSRSState(vocabId, state);
+  // FSRS 알고리즘으로 업데이트
+  const fsrsState = updateFSRSByQuality(vocabId, quality);
+  const srsState = fsrsToSRSState(fsrsState);
 
   // Sync to cloud (non-blocking)
   if (isSupabaseEnabled()) {
     const deviceId = getDeviceId();
-    saveSingleRecord(deviceId, state).catch(console.error);
+    // 클라우드 동기화 (FSRS 형식으로)
+    try {
+      const { saveSingleRecord } = await import("./supabase");
+      saveSingleRecord(deviceId, srsState).catch(console.error);
+    } catch {
+      // Supabase 모듈 로드 실패 무시
+    }
   }
 
-  return state;
+  return srsState;
+}
+
+/**
+ * 앱 시작 시 SM-2 → FSRS 마이그레이션 실행
+ * 한 번만 실행됨 (이미 마이그레이션된 데이터는 스킵)
+ */
+export function runMigrationIfNeeded(): { migrated: number; skipped: number } {
+  return migrateAllFromSM2();
+}
+
+/**
+ * FSRS 데이터를 Supabase 레거시 형식으로 변환
+ */
+function convertToSupabaseFormat(
+  fsrsStates: Record<number, FSRSState>
+): Record<number, { vocab_id: number; interval: number; ease_factor: number; next_review: string; reps: number }> {
+  const result: Record<number, { vocab_id: number; interval: number; ease_factor: number; next_review: string; reps: number }> = {};
+  for (const [id, fsrs] of Object.entries(fsrsStates)) {
+    result[parseInt(id)] = fsrsToSupabaseFormat(fsrs);
+  }
+  return result;
 }
 
 /**
  * Sync with cloud (full sync)
+ * 클라우드는 레거시 형식 유지 (Supabase 스키마 호환)
+ * 로컬은 FSRS 형식 사용
  */
 export async function syncWithCloud(): Promise<{
   success: boolean;
@@ -378,23 +452,34 @@ export async function syncWithCloud(): Promise<{
   try {
     const deviceId = getDeviceId();
     const cloudData = await fetchFromCloud(deviceId);
-    const localData = getSRSStates();
+    const localFSRS = getFSRSStates();
 
     if (cloudData && Object.keys(cloudData).length > 0) {
-      // Merge: prefer more progress
-      const merged = { ...localData };
+      // Merge: prefer more progress (더 높은 stability 기준)
+      const merged = { ...localFSRS };
       for (const [id, cloud] of Object.entries(cloudData)) {
         const vocabId = parseInt(id);
-        const local = localData[vocabId];
-        if (!local || cloud.reps > local.reps) {
-          merged[vocabId] = cloud;
+        const local = localFSRS[vocabId];
+
+        // 클라우드 데이터를 FSRS 형식으로 변환
+        const cloudFSRS = migrateSM2ToFSRS({
+          vocab_id: cloud.vocab_id,
+          interval: cloud.interval,
+          ease_factor: cloud.ease_factor,
+          next_review: cloud.next_review,
+          reps: cloud.reps,
+        });
+
+        if (!local || cloudFSRS.stability > local.stability) {
+          merged[vocabId] = cloudFSRS;
         }
       }
-      saveAllSRSStates(merged);
-      await saveToCloud(deviceId, merged);
+      saveAllFSRSStates(merged);
+      // 레거시 형식으로 변환하여 클라우드에 저장
+      await saveToCloud(deviceId, convertToSupabaseFormat(merged));
     } else {
-      // No cloud data, upload local
-      await saveToCloud(deviceId, localData);
+      // No cloud data, upload local (레거시 형식으로 변환)
+      await saveToCloud(deviceId, convertToSupabaseFormat(localFSRS));
     }
 
     localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
@@ -459,31 +544,33 @@ export async function getNewCards(
 }
 
 // ============================================
-// Statistics
+// Statistics (FSRS 기반)
 // ============================================
 
 /**
  * Get statistics (sync version - uses only localStorage)
+ *
+ * 마스터 기준 변경 (FSRS):
+ * - 기존: reps >= 5 (하루에 5번 맞으면 마스터)
+ * - 변경: stability >= 21일 (3주 이상 기억 유지 예상)
+ *
+ * 이렇게 하면 에빙하우스 망각곡선에 따라 실제로 장기기억에
+ * 정착된 단어만 마스터로 분류됩니다.
  */
 export function getStats() {
   if (typeof window === "undefined") {
     return { total: 0, learned: 0, mastered: 0, dueToday: 0 };
   }
 
-  const states = getSRSStates();
-  const today = new Date().toISOString().split("T")[0];
+  // FSRS 통계 직접 사용
+  const fsrsStats = getFSRSStats();
 
-  let learned = 0,
-    mastered = 0,
-    dueToday = 0;
-
-  Object.values(states).forEach((state) => {
-    if (state.reps > 0) learned++;
-    if (state.reps >= 5) mastered++;
-    if (state.next_review.split("T")[0] <= today) dueToday++;
-  });
-
-  return { total: Object.keys(states).length, learned, mastered, dueToday };
+  return {
+    total: fsrsStats.total,
+    learned: fsrsStats.total - fsrsStats.newCards, // 한 번이라도 학습한 카드
+    mastered: fsrsStats.mastered, // stability >= 21일
+    dueToday: fsrsStats.dueToday,
+  };
 }
 
 /**
@@ -548,11 +635,14 @@ export async function getStatsAsync(): Promise<{
 }
 
 /**
- * Clear all SRS data
+ * Clear all SRS data (FSRS 및 레거시 SM-2 모두)
  */
 export function clearSRSData(): void {
   if (typeof window === "undefined") return;
-  localStorage.removeItem(SRS_STORAGE_KEY);
+  // FSRS 데이터 삭제
+  clearFSRSData();
+  // 레거시 SM-2 데이터도 삭제
+  localStorage.removeItem(LEGACY_SRS_STORAGE_KEY);
   localStorage.removeItem(LAST_SYNC_KEY);
 }
 
