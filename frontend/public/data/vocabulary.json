@@ -18,4 +18,14 @@
 {"id":19,"kanji":"ぼくは学生じゃない。","reading":"ぼくはがくせいじゃない。","meaning":"나는 학생이 아니야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
 {"id":20,"kanji":"わたしは会社員じゃない。","reading":"わたしはかいしゃいんじゃない。","meaning":"나는 회사원이 아니야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
 {"id":21,"kanji":"ぼくは歌手じゃない。","reading":"ぼくはかしゅじゃない。","meaning":"나는 가수가 아니야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
-{"id":22,"kanji":"わたしは主婦じゃない。","reading":"わたしはしゅふじゃない。","meaning":"나는 주부가 아니야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""}]
+{"id":22,"kanji":"わたしは主婦じゃない。","reading":"わたしはしゅふじゃない。","meaning":"나는 주부가 아니야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
+{"id":23,"kanji":"浅草に行くなら、浅草寺にも行きたいな","reading":"あさくさにいくなら、せんそうじにもいきたいな","meaning":"아사쿠사에 갈 거라면, 센소지에도 가고 싶네","pos":"文","jlpt_level":null,"example_sentence":"","example_meaning":""},
+{"id":24,"kanji":"遅刻したら、罰としてトイレ掃除なんだよ","reading":"ちこくしたら、ばつとしてトイレそうじなんだよ","meaning":"지각하면 벌로 화장실 청소란 말이야","pos":"文","jlpt_level":null,"example_sentence":"","example_meaning":""},
+{"id":25,"kanji":"緑茶があれば緑茶を飲みます","reading":"りょくちゃがあればりょくちゃをのみます","meaning":"녹차가 있으면 녹차를 마셔요","pos":"文","jlpt_level":null,"example_sentence":"","example_meaning":""},
+{"id":26,"kanji":"年が明けると、家族で書初めをします","reading":"としがあけると、かぞくでかきぞめをします","meaning":"새해가 밝으면, 가족 다 같이 카키조메를 해요","pos":"文","jlpt_level":null,"example_sentence":"","example_meaning":""},
+{"id":27,"kanji":"参加できるかどうか","reading":"さんかできるかどうか","meaning":"참가할 수 있을지 어떨지","pos":"文","jlpt_level":null,"example_sentence":"","example_meaning":""},
+{"id":28,"kanji":"断食するしかない","reading":"だんじきするしかない","meaning":"단식하는 수밖에 없어","pos":"文","jlpt_level":null,"example_sentence":"","example_meaning":""},
+{"id":29,"kanji":"有名なだけじゃなく、とてもおいしいんですよ","reading":"ゆうめいなだけじゃなく、とてもおいしいんですよ","meaning":"유명할 뿐만 아니라 아주 맛있거든요","pos":"文","jlpt_level":null,"example_sentence":"","example_meaning":""},
+{"id":30,"kanji":"クリスマスイブほど孤独を感じる日はないね","reading":"クリスマスイブほどこどくをかんじるひはないね","meaning":"크리스마스이브만큼 고독을 느끼는 날은 없네","pos":"文","jlpt_level":null,"example_sentence":"","example_meaning":""},
+{"id":31,"kanji":"いくら頑張っても給料は上がらないし","reading":"いくらがんばってもきゅうりょうはあがらないし","meaning":"아무리 열심히 해도 월급은 안 오르고","pos":"文","jlpt_level":null,"example_sentence":"","example_meaning":""},
+{"id":32,"kanji":"ミナも一緒に行こうよ","reading":"ミナもいっしょにいこうよ","meaning":"미나도 같이 가자","pos":"文","jlpt_level":null,"example_sentence":"","example_meaning":""}]
