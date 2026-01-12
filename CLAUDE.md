@@ -250,11 +250,12 @@ INSERT INTO Grammar (
 ## 추출 프롬프트
 
 이미지를 Claude에 첨부한 후 목적에 맞는 프롬프트를 사용하세요.
+출력된 JSON을 `frontend/public/data/vocabulary.json`에 추가하면 됩니다.
 
 ### 기본 모드: 단어 추출 (기본값)
 
 ```
-이 일본어 교재 이미지에서 단어와 문법을 추출해서 SQL INSERT 문으로 만들어줘.
+이 일본어 교재 이미지에서 단어를 추출해서 JSON 형식으로 만들어줘.
 
 ## 규칙
 1. 이미지에 보이는 단어만 (환각 금지)
@@ -262,17 +263,14 @@ INSERT INTO Grammar (
 3. 동사는 사전형으로 (食べた → 食べる)
 4. 예문 필수 - 없으면 자연스럽게 생성
 5. 의미는 한국어로
+6. id는 기존 vocabulary.json의 마지막 id + 1부터 시작
 
-## 출력 형식
+## 출력 형식 (JSON 배열)
 
-### 단어
-INSERT INTO Vocabulary (kanji, reading, meaning, pos, example_sentence, example_meaning, jlpt_level) VALUES
-('食べる', 'たべる', '먹다', '動詞', '朝ごはんを食べる。', '아침밥을 먹는다.', 'N5'),
-('学校', 'がっこう', '학교', '名詞', '学校に行きます。', '학교에 갑니다.', 'N5');
-
-### 문법
-INSERT INTO Grammar (title, explanation, example_jp, example_kr, level) VALUES
-('〜ている', '진행/상태를 나타냄', '本を読んでいる。', '책을 읽고 있다.', 'N4');
+[
+  {"id": 15, "kanji": "食べる", "reading": "たべる", "meaning": "먹다", "pos": "動詞", "jlpt_level": "N5", "example_sentence": "朝ごはんを食べる。", "example_meaning": "아침밥을 먹는다."},
+  {"id": 16, "kanji": "学校", "reading": "がっこう", "meaning": "학교", "pos": "名詞", "jlpt_level": "N5", "example_sentence": "学校に行きます。", "example_meaning": "학교에 갑니다."}
+]
 ```
 
 ### 문장 모드: 문장 암기용 (요청 시만)
@@ -289,18 +287,26 @@ INSERT INTO Grammar (title, explanation, example_jp, example_kr, level) VALUES
 4. pos = "文" (문장)
 5. example은 비워두거나 문맥 설명
 
-## 출력 형식
+## 출력 형식 (JSON 배열)
 
-INSERT INTO Vocabulary (kanji, reading, meaning, pos, example_sentence, example_meaning, jlpt_level) VALUES
-('私は学生です。', 'わたしはがくせいです。', '저는 학생입니다.', '文', '', '', 'N5'),
-('毎日日本語を勉強しています。', 'まいにちにほんごをべんきょうしています。', '매일 일본어를 공부하고 있습니다.', '文', '', '', 'N4'),
-('明日の天気はどうですか。', 'あしたのてんきはどうですか。', '내일 날씨는 어떻습니까?', '文', '', '', 'N5');
+[
+  {"id": 100, "kanji": "私は学生です。", "reading": "わたしはがくせいです。", "meaning": "저는 학생입니다.", "pos": "文", "jlpt_level": "N5", "example_sentence": "", "example_meaning": ""},
+  {"id": 101, "kanji": "毎日日本語を勉強しています。", "reading": "まいにちにほんごをべんきょうしています。", "meaning": "매일 일본어를 공부하고 있습니다.", "pos": "文", "jlpt_level": "N4", "example_sentence": "", "example_meaning": ""}
+]
 ```
 
 **문장 모드 활용**:
 - 회화 패턴 암기
 - 시험 대비 예문 암기
 - 상황별 표현 학습
+
+### 사용법
+
+1. Claude 앱에서 이미지 첨부 + "단어 추출" 또는 "문장 추출"
+2. 출력된 JSON 복사
+3. `frontend/public/data/vocabulary.json` 파일의 배열에 추가
+4. `git add . && git commit -m "feat: 단어 추가" && git push`
+5. Vercel 자동 배포
 
 ---
 
