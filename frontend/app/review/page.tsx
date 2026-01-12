@@ -325,6 +325,9 @@ function ReviewPageContent() {
           <div className="flex flex-col items-center justify-center h-full space-y-4">
             <p className="text-4xl font-bold text-amber-600">{currentCard.kanji}</p>
             <p className="text-xl text-stone-600">{currentCard.reading || "-"}</p>
+            <p className="text-xl text-stone-700">
+              {currentCard.meaning || <span className="italic text-stone-400">의미 미입력</span>}
+            </p>
             {currentCard.example_sentence && (
               <div className="mt-4 flex items-center justify-center gap-2">
                 <p className="text-lg text-center text-stone-500">
