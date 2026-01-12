@@ -25,6 +25,12 @@ import {
   LEARNING_PHASES,
   DailyGoal,
 } from "@/lib/learning-optimizer";
+import {
+  getGeminiApiKey,
+  setGeminiApiKey,
+  clearGeminiApiKey,
+  isGeminiEnabled,
+} from "@/lib/gemini";
 
 interface StatsData {
   total: number;
@@ -41,6 +47,11 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true);
   const [showGoalSettings, setShowGoalSettings] = useState(false);
   const [goals, setGoalsState] = useState<DailyGoal | null>(null);
+
+  // Gemini API settings
+  const [showApiSettings, setShowApiSettings] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [geminiEnabled, setGeminiEnabled] = useState(false);
 
   // Learning optimizer data
   const streak = getStreak();
@@ -76,6 +87,14 @@ export default function StatsPage() {
         });
 
         setGoalsState(getGoals());
+
+        // Load Gemini settings
+        setGeminiEnabled(isGeminiEnabled());
+        const existingKey = getGeminiApiKey();
+        if (existingKey) {
+          // Show masked key
+          setApiKeyInput(existingKey.slice(0, 10) + "..." + existingKey.slice(-4));
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -90,6 +109,21 @@ export default function StatsPage() {
     if (!goals) return;
     const newGoals = setGoals({ [key]: value });
     setGoalsState(newGoals);
+  };
+
+  const handleSaveApiKey = () => {
+    if (apiKeyInput && !apiKeyInput.includes("...")) {
+      setGeminiApiKey(apiKeyInput);
+      setGeminiEnabled(true);
+      // Mask the displayed key
+      setApiKeyInput(apiKeyInput.slice(0, 10) + "..." + apiKeyInput.slice(-4));
+    }
+  };
+
+  const handleClearApiKey = () => {
+    clearGeminiApiKey();
+    setGeminiEnabled(false);
+    setApiKeyInput("");
   };
 
   const progress =
@@ -341,6 +375,67 @@ export default function StatsPage() {
                   </ul>
                 </div>
               ))}
+            </div>
+
+            {/* AI Settings */}
+            <div className="space-y-3 pt-4 border-t border-neutral-100">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-neutral-400">AI 피드백 설정</p>
+                <button
+                  onClick={() => setShowApiSettings(!showApiSettings)}
+                  className="text-[10px] text-neutral-400 hover:text-neutral-600"
+                >
+                  {showApiSettings ? "닫기" : "설정"}
+                </button>
+              </div>
+
+              {/* Status */}
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${geminiEnabled ? "bg-green-500" : "bg-neutral-300"}`} />
+                <span className="text-xs text-neutral-600">
+                  {geminiEnabled ? "Gemini AI 활성화됨" : "AI 피드백 비활성화"}
+                </span>
+              </div>
+
+              {showApiSettings && (
+                <div className="p-3 bg-neutral-50 rounded space-y-3">
+                  <p className="text-[10px] text-neutral-500">
+                    설명 모드에서 AI가 피드백을 제공합니다.
+                  </p>
+                  <div>
+                    <label className="text-[10px] text-neutral-500 block mb-1">
+                      Gemini API Key
+                    </label>
+                    <input
+                      type="text"
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      placeholder="AIzaSy..."
+                      className="w-full px-3 py-2 text-xs border border-neutral-200 rounded focus:outline-none focus:border-neutral-400"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveApiKey}
+                      disabled={!apiKeyInput || apiKeyInput.includes("...")}
+                      className="flex-1 py-2 text-xs bg-neutral-900 text-white rounded hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      저장
+                    </button>
+                    {geminiEnabled && (
+                      <button
+                        onClick={handleClearApiKey}
+                        className="px-4 py-2 text-xs border border-neutral-300 text-neutral-600 rounded hover:bg-neutral-100"
+                      >
+                        삭제
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-neutral-400">
+                    API 키는 브라우저에만 저장됩니다.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

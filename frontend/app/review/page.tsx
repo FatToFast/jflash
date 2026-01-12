@@ -24,6 +24,13 @@ import {
   generateFeynmanPrompt,
   FeynmanPrompt,
 } from "@/lib/learning-optimizer";
+import {
+  evaluateFeynmanExplanation,
+  FeynmanFeedback,
+  isGeminiEnabled,
+  scoreToEmoji,
+  scoreToLabel,
+} from "@/lib/gemini";
 
 type SessionState = "loading" | "ready" | "studying" | "complete";
 type ReviewMode = "normal" | "reverse" | "listening" | "cloze" | "sentence" | "feynman";
@@ -66,6 +73,8 @@ function ReviewPageContent() {
   const [feynmanPrompt, setFeynmanPrompt] = useState<FeynmanPrompt | null>(null);
   const [feynmanInput, setFeynmanInput] = useState("");
   const [feynmanSubmitted, setFeynmanSubmitted] = useState(false);
+  const [feynmanFeedback, setFeynmanFeedback] = useState<FeynmanFeedback | null>(null);
+  const [feynmanLoading, setFeynmanLoading] = useState(false);
 
   const currentCard = cards[currentIndex];
 
@@ -146,6 +155,7 @@ function ReviewPageContent() {
           // Reset Feynman state for next card
           setFeynmanSubmitted(false);
           setFeynmanInput("");
+          setFeynmanFeedback(null);
           // Generate new Feynman prompt for next card
           if (reviewMode === "feynman" && cards[currentIndex + 1]) {
             const nextCard = cards[currentIndex + 1];
@@ -171,12 +181,32 @@ function ReviewPageContent() {
     [currentCard, currentIndex, cards.length, isAnswering, reviewMode, cards]
   );
 
-  // Feynman mode: submit explanation
-  const handleFeynmanSubmit = useCallback(() => {
-    if (feynmanInput.trim().length < 2) return;
+  // Feynman mode: submit explanation with AI feedback
+  const handleFeynmanSubmit = useCallback(async () => {
+    if (feynmanInput.trim().length < 2 || !currentCard) return;
+
     setFeynmanSubmitted(true);
     setIsFlipped(true);
-  }, [feynmanInput]);
+
+    // Call Gemini API for feedback if enabled
+    if (isGeminiEnabled()) {
+      setFeynmanLoading(true);
+      try {
+        const feedback = await evaluateFeynmanExplanation(
+          currentCard.kanji,
+          currentCard.reading || "",
+          currentCard.meaning || "",
+          feynmanInput,
+          currentCard.example_sentence || undefined
+        );
+        setFeynmanFeedback(feedback);
+      } catch (err) {
+        console.error("Feynman feedback error:", err);
+      } finally {
+        setFeynmanLoading(false);
+      }
+    }
+  }, [feynmanInput, currentCard]);
 
   const playPronunciation = useCallback(() => {
     if (!currentCard || isSpeaking) return;
@@ -255,6 +285,7 @@ function ReviewPageContent() {
     // Reset Feynman state
     setFeynmanSubmitted(false);
     setFeynmanInput("");
+    setFeynmanFeedback(null);
 
     if (reviewMode === "listening" && targetCards[0]) {
       setTimeout(() => {
@@ -411,13 +442,50 @@ function ReviewPageContent() {
         <p className="text-lg text-neutral-500">{currentCard.reading}</p>
         <p className="text-base text-neutral-700">{currentCard.meaning}</p>
 
-        {/* Feynman mode: show user's explanation */}
+        {/* Feynman mode: show user's explanation and AI feedback */}
         {reviewMode === "feynman" && feynmanSubmitted && feynmanInput && (
-          <div className="mt-4 pt-4 border-t border-neutral-100 w-full">
-            <p className="text-xs text-neutral-400 mb-2">내 설명:</p>
-            <p className="text-sm text-neutral-600 bg-neutral-50 p-3 rounded">
-              {feynmanInput}
-            </p>
+          <div className="mt-4 pt-4 border-t border-neutral-100 w-full space-y-3">
+            <div>
+              <p className="text-xs text-neutral-400 mb-2">내 설명:</p>
+              <p className="text-sm text-neutral-600 bg-neutral-50 p-3 rounded">
+                {feynmanInput}
+              </p>
+            </div>
+
+            {/* AI Feedback */}
+            {feynmanLoading && (
+              <div className="text-center py-2">
+                <p className="text-xs text-neutral-400">AI 평가 중...</p>
+              </div>
+            )}
+
+            {feynmanFeedback && !feynmanLoading && (
+              <div className={`p-3 rounded text-sm ${
+                feynmanFeedback.isCorrect
+                  ? "bg-green-50 border border-green-100"
+                  : "bg-amber-50 border border-amber-100"
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs">{scoreToEmoji(feynmanFeedback.score)}</span>
+                  <span className={`text-xs font-medium ${
+                    feynmanFeedback.isCorrect ? "text-green-600" : "text-amber-600"
+                  }`}>
+                    {scoreToLabel(feynmanFeedback.score)}
+                  </span>
+                </div>
+                <p className="text-neutral-700">{feynmanFeedback.feedback}</p>
+                {feynmanFeedback.suggestion && (
+                  <p className="mt-2 text-xs text-neutral-500">
+                    💡 {feynmanFeedback.suggestion}
+                  </p>
+                )}
+                {feynmanFeedback.betterExample && (
+                  <p className="mt-2 text-xs text-neutral-500">
+                    📝 예시: {feynmanFeedback.betterExample}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
