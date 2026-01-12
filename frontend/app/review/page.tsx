@@ -3,6 +3,7 @@
 /**
  * Review Page - Minimal Japanese aesthetic
  * Clean flashcard interface with focus on content
+ * + Feynman mode for deep learning
  */
 
 import { useState, useEffect, useCallback, Suspense } from "react";
@@ -16,9 +17,16 @@ import {
   updateSRS,
 } from "@/lib/static-data";
 import { speakJapanese, initializeVoices } from "@/lib/tts";
+import {
+  updateDailyProgress,
+  startStudySession,
+  endStudySession,
+  generateFeynmanPrompt,
+  FeynmanPrompt,
+} from "@/lib/learning-optimizer";
 
 type SessionState = "loading" | "ready" | "studying" | "complete";
-type ReviewMode = "normal" | "reverse" | "listening" | "cloze" | "sentence";
+type ReviewMode = "normal" | "reverse" | "listening" | "cloze" | "sentence" | "feynman";
 
 interface SessionResult {
   total: number;
@@ -53,6 +61,11 @@ function ReviewPageContent() {
     }
     return false;
   });
+
+  // Feynman mode state
+  const [feynmanPrompt, setFeynmanPrompt] = useState<FeynmanPrompt | null>(null);
+  const [feynmanInput, setFeynmanInput] = useState("");
+  const [feynmanSubmitted, setFeynmanSubmitted] = useState(false);
 
   const currentCard = cards[currentIndex];
 
@@ -120,10 +133,33 @@ function ReviewPageContent() {
           incorrect: prev.incorrect + (known ? 0 : 1),
         }));
 
+        // Update daily progress
+        updateDailyProgress({
+          cardsReviewed: 1,
+          correctAnswers: known ? 1 : 0,
+          wrongAnswers: known ? 0 : 1,
+        });
+
         if (currentIndex < cards.length - 1) {
           setCurrentIndex((prev) => prev + 1);
           setIsFlipped(false);
+          // Reset Feynman state for next card
+          setFeynmanSubmitted(false);
+          setFeynmanInput("");
+          // Generate new Feynman prompt for next card
+          if (reviewMode === "feynman" && cards[currentIndex + 1]) {
+            const nextCard = cards[currentIndex + 1];
+            setFeynmanPrompt(
+              generateFeynmanPrompt(nextCard.id, nextCard.kanji, nextCard.meaning || "")
+            );
+          }
         } else {
+          // Session complete - track time
+          const studyTime = endStudySession();
+          updateDailyProgress({
+            studyTimeMinutes: studyTime,
+            feynmanSessions: reviewMode === "feynman" ? 1 : 0,
+          });
           setSessionState("complete");
         }
       } catch (err) {
@@ -132,8 +168,15 @@ function ReviewPageContent() {
         setIsAnswering(false);
       }
     },
-    [currentCard, currentIndex, cards.length, isAnswering]
+    [currentCard, currentIndex, cards.length, isAnswering, reviewMode, cards]
   );
+
+  // Feynman mode: submit explanation
+  const handleFeynmanSubmit = useCallback(() => {
+    if (feynmanInput.trim().length < 2) return;
+    setFeynmanSubmitted(true);
+    setIsFlipped(true);
+  }, [feynmanInput]);
 
   const playPronunciation = useCallback(() => {
     if (!currentCard || isSpeaking) return;
@@ -206,10 +249,24 @@ function ReviewPageContent() {
     setSessionResult({ total: 0, correct: 0, incorrect: 0 });
     setSessionState("studying");
 
+    // Start study session timer
+    startStudySession();
+
+    // Reset Feynman state
+    setFeynmanSubmitted(false);
+    setFeynmanInput("");
+
     if (reviewMode === "listening" && targetCards[0]) {
       setTimeout(() => {
         speakJapanese(targetCards[0].kanji);
       }, 500);
+    }
+
+    // Generate Feynman prompt for first card
+    if (reviewMode === "feynman" && targetCards[0]) {
+      setFeynmanPrompt(
+        generateFeynmanPrompt(targetCards[0].id, targetCards[0].kanji, targetCards[0].meaning || "")
+      );
     }
   };
 
@@ -245,6 +302,7 @@ function ReviewPageContent() {
       case "listening": return "듣기";
       case "cloze": return "빈칸";
       case "sentence": return "문장";
+      case "feynman": return "설명";
     }
   };
 
@@ -301,6 +359,35 @@ function ReviewPageContent() {
       );
     }
 
+    // Feynman mode - explain the word
+    if (reviewMode === "feynman" && feynmanPrompt) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full px-2">
+          <p className="text-3xl mb-4">{currentCard.kanji}</p>
+          <p className="text-sm text-neutral-500 mb-6 text-center">
+            {feynmanPrompt.prompt}
+          </p>
+          <textarea
+            value={feynmanInput}
+            onChange={(e) => setFeynmanInput(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="설명을 적어보세요..."
+            className="w-full h-24 p-3 text-sm border border-neutral-200 rounded resize-none focus:outline-none focus:border-neutral-400"
+          />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleFeynmanSubmit();
+            }}
+            disabled={feynmanInput.trim().length < 2}
+            className="mt-4 px-6 py-2 text-sm bg-neutral-900 text-white hover:bg-neutral-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            확인하기
+          </button>
+        </div>
+      );
+    }
+
     // normal & sentence
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -323,6 +410,16 @@ function ReviewPageContent() {
         </p>
         <p className="text-lg text-neutral-500">{currentCard.reading}</p>
         <p className="text-base text-neutral-700">{currentCard.meaning}</p>
+
+        {/* Feynman mode: show user's explanation */}
+        {reviewMode === "feynman" && feynmanSubmitted && feynmanInput && (
+          <div className="mt-4 pt-4 border-t border-neutral-100 w-full">
+            <p className="text-xs text-neutral-400 mb-2">내 설명:</p>
+            <p className="text-sm text-neutral-600 bg-neutral-50 p-3 rounded">
+              {feynmanInput}
+            </p>
+          </div>
+        )}
 
         {currentCard.example_sentence && !isSentenceMode && (
           <div className="mt-6 pt-6 border-t border-neutral-100 w-full text-center">
@@ -397,17 +494,18 @@ function ReviewPageContent() {
             {!isSentenceMode && (
               <div className="space-y-3">
                 <p className="text-xs text-neutral-400">모드</p>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-5 gap-1">
                   {[
                     { value: "normal", label: "기본" },
                     { value: "reverse", label: "역방향" },
                     { value: "listening", label: "듣기" },
                     { value: "cloze", label: "빈칸" },
+                    { value: "feynman", label: "설명" },
                   ].map((mode) => (
                     <button
                       key={mode.value}
                       onClick={() => setReviewMode(mode.value as ReviewMode)}
-                      className={`flex-1 py-2 text-sm border transition-colors ${
+                      className={`flex-1 py-2 text-xs border transition-colors ${
                         reviewMode === mode.value
                           ? "border-neutral-900 bg-neutral-900 text-white"
                           : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
@@ -417,6 +515,11 @@ function ReviewPageContent() {
                     </button>
                   ))}
                 </div>
+                {reviewMode === "feynman" && (
+                  <p className="text-[10px] text-neutral-400 mt-2">
+                    파인만 기법: 단어를 자신의 말로 설명하며 학습
+                  </p>
+                )}
               </div>
             )}
 
