@@ -79,11 +79,34 @@ export default function ReviewPage() {
 
   /**
    * 빈칸 예문 생성
-   * 단어를 ___ 로 대체
+   * 단어(또는 한자 부분)를 ___ 로 대체
+   *
+   * 예: 食べる → 食べます 에서 "食べ" 부분을 찾아서 대체
    */
   const createClozeText = (sentence: string, word: string): string => {
-    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return sentence.replace(new RegExp(escaped, 'g'), '___');
+    // 1. 정확히 일치하면 그대로 대체
+    if (sentence.includes(word)) {
+      return sentence.replace(word, '___');
+    }
+
+    // 2. 한자 부분만 추출해서 매칭 시도 (동사 활용 대응)
+    const kanjiOnly = word.match(/[\u4e00-\u9faf]+/g)?.join('') || '';
+    if (kanjiOnly && sentence.includes(kanjiOnly)) {
+      // 한자 + 뒤따르는 히라가나까지 포함해서 대체
+      const pattern = new RegExp(kanjiOnly + '[ぁ-んァ-ン]*');
+      return sentence.replace(pattern, '___');
+    }
+
+    // 3. 단어 앞부분(어간)으로 매칭 시도 (예: 食べる → 食べ)
+    const stem = word.slice(0, -1);
+    if (stem.length >= 2 && sentence.includes(stem)) {
+      const escaped = stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(escaped + '[ぁ-んァ-ン]*');
+      return sentence.replace(pattern, '___');
+    }
+
+    // 4. 매칭 실패 시 원문 그대로
+    return sentence;
   };
 
   /**
