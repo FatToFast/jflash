@@ -318,5 +318,105 @@
     "jlpt_level": "N5",
     "example_sentence": "ミナも一緒に行こうよ",
     "example_meaning": "미나도 같이 가자"
+  },
+  {
+    "id": 52,
+    "kanji": "レストラン",
+    "reading": "れすとらん",
+    "meaning": "레스토랑",
+    "pos": "名詞",
+    "jlpt_level": "N5",
+    "example_sentence": "レストランで食事します。",
+    "example_meaning": "레스토랑에서 식사합니다."
+  },
+  {
+    "id": 53,
+    "kanji": "練習する",
+    "reading": "れんしゅうする",
+    "meaning": "연습하다",
+    "pos": "動詞",
+    "jlpt_level": "N4",
+    "example_sentence": "毎日ピアノを練習します。",
+    "example_meaning": "매일 피아노를 연습합니다."
+  },
+  {
+    "id": 54,
+    "kanji": "廊下",
+    "reading": "ろうか",
+    "meaning": "복도",
+    "pos": "名詞",
+    "jlpt_level": "N4",
+    "example_sentence": "廊下を走らないでください。",
+    "example_meaning": "복도에서 뛰지 마세요."
+  },
+  {
+    "id": 55,
+    "kanji": "六",
+    "reading": "ろく",
+    "meaning": "육, 6",
+    "pos": "名詞",
+    "jlpt_level": "N5",
+    "example_sentence": "六時に起きます。",
+    "example_meaning": "6시에 일어납니다."
+  },
+  {
+    "id": 56,
+    "kanji": "ワイシャツ",
+    "reading": "わいしゃつ",
+    "meaning": "셔츠, 와이셔츠",
+    "pos": "名詞",
+    "jlpt_level": "N4",
+    "example_sentence": "白いワイシャツを着ます。",
+    "example_meaning": "흰 와이셔츠를 입습니다."
+  },
+  {
+    "id": 57,
+    "kanji": "若い",
+    "reading": "わかい",
+    "meaning": "젊은",
+    "pos": "形容詞",
+    "jlpt_level": "N5",
+    "example_sentence": "彼は若い先生です。",
+    "example_meaning": "그는 젊은 선생님입니다."
+  },
+  {
+    "id": 58,
+    "kanji": "分かる",
+    "reading": "わかる",
+    "meaning": "알다, 이해하다",
+    "pos": "動詞",
+    "jlpt_level": "N5",
+    "example_sentence": "日本語が分かります。",
+    "example_meaning": "일본어를 압니다."
+  },
+  {
+    "id": 59,
+    "kanji": "忘れる",
+    "reading": "わすれる",
+    "meaning": "잊다, 잊어버리다",
+    "pos": "動詞",
+    "jlpt_level": "N5",
+    "example_sentence": "傘を忘れました。",
+    "example_meaning": "우산을 잊어버렸습니다."
+  },
+  {
+    "id": 60,
+    "kanji": "私",
+    "reading": "わたくし",
+    "meaning": "나, 저 (격식체)",
+    "pos": "名詞",
+    "jlpt_level": "N4",
+    "example_sentence": "私は田中と申します。",
+    "example_meaning": "저는 다나카라고 합니다."
+  },
+  {
+    "id": 61,
+    "kanji": "渡す",
+    "reading": "わたす",
+    "meaning": "건네주다",
+    "pos": "動詞",
+    "jlpt_level": "N4",
+    "example_sentence": "先生に本を渡します。",
+    "example_meaning": "선생님께 책을 건네드립니다."
   }
 ]
