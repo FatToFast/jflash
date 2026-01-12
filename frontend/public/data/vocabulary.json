@@ -10,4 +10,12 @@
 {"id":11,"kanji":"歌手","reading":"かしゅ","meaning":"가수","pos":"名詞","jlpt_level":null,"example_sentence":"彼女は歌手です。","example_meaning":"그녀는 가수입니다."},
 {"id":12,"kanji":"主婦","reading":"しゅふ","meaning":"주부","pos":"名詞","jlpt_level":null,"example_sentence":"母は主婦です。","example_meaning":"어머니는 주부입니다."},
 {"id":13,"kanji":"私","reading":"わたし","meaning":"나, 저","pos":"名詞","jlpt_level":"N5","example_sentence":"私は日本語を勉強します。","example_meaning":"나는 일본어를 공부합니다."},
-{"id":14,"kanji":"僕","reading":"ぼく","meaning":"나(남성)","pos":"名詞","jlpt_level":null,"example_sentence":"僕は日本人です。","example_meaning":"나는 일본인입니다."}]
+{"id":14,"kanji":"僕","reading":"ぼく","meaning":"나(남성)","pos":"名詞","jlpt_level":null,"example_sentence":"僕は日本人です。","example_meaning":"나는 일본인입니다."},
+{"id":15,"kanji":"ぼくは学生。","reading":"ぼくはがくせい。","meaning":"나는 학생이야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
+{"id":16,"kanji":"わたしは会社員。","reading":"わたしはかいしゃいん。","meaning":"나는 회사원이야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
+{"id":17,"kanji":"ぼくは歌手。","reading":"ぼくはかしゅ。","meaning":"나는 가수야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
+{"id":18,"kanji":"わたしは主婦。","reading":"わたしはしゅふ。","meaning":"나는 주부야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
+{"id":19,"kanji":"ぼくは学生じゃない。","reading":"ぼくはがくせいじゃない。","meaning":"나는 학생이 아니야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
+{"id":20,"kanji":"わたしは会社員じゃない。","reading":"わたしはかいしゃいんじゃない。","meaning":"나는 회사원이 아니야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
+{"id":21,"kanji":"ぼくは歌手じゃない。","reading":"ぼくはかしゅじゃない。","meaning":"나는 가수가 아니야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""},
+{"id":22,"kanji":"わたしは主婦じゃない。","reading":"わたしはしゅふじゃない。","meaning":"나는 주부가 아니야.","pos":"文","jlpt_level":"N5","example_sentence":"","example_meaning":""}]
