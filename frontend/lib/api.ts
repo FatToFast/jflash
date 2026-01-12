@@ -1,42 +1,175 @@
 /**
  * API client for J-Flash backend
+ * Using native fetch instead of axios for smaller bundle size
  */
 
-import axios from "axios";
 import { API_BASE_URL, getApiUrl } from "./config";
 
 // Timeout configuration
 const DEFAULT_TIMEOUT = 30000; // 30초 (일반 API 요청)
 const OCR_TIMEOUT = 120000; // 2분 (OCR 첫 실행 시 모델 로딩 시간 고려)
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: DEFAULT_TIMEOUT,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// OCR 전용 axios 인스턴스 (긴 타임아웃)
-const ocrApi = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: OCR_TIMEOUT,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Request interceptor: FormData 전송 시 Content-Type 헤더 제거
-// (axios가 자동으로 multipart/form-data + boundary 설정)
-api.interceptors.request.use((config) => {
-  if (config.data instanceof FormData) {
-    // Content-Type 헤더 삭제 - axios가 자동으로 설정함
-    delete config.headers["Content-Type"];
+/**
+ * Custom error class for API errors
+ */
+class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public statusText: string
+  ) {
+    super(message);
+    this.name = "ApiError";
   }
-  return config;
-});
+}
 
-export default api;
+/**
+ * Generic fetch wrapper with timeout and error handling
+ */
+async function fetchWithTimeout<T>(
+  url: string,
+  options: RequestInit = {},
+  timeout: number = DEFAULT_TIMEOUT
+): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Unknown error");
+      throw new ApiError(errorText, response.status, response.statusText);
+    }
+
+    // Handle empty responses
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      return response.json();
+    }
+    return {} as T;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * API GET request
+ */
+async function apiGet<T>(
+  path: string,
+  params?: Record<string, string | number | boolean | undefined>,
+  timeout: number = DEFAULT_TIMEOUT
+): Promise<T> {
+  let url = `${API_BASE_URL}${path}`;
+
+  if (params) {
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined) {
+        searchParams.append(key, String(value));
+      }
+    }
+    const queryString = searchParams.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+  }
+
+  return fetchWithTimeout<T>(
+    url,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+    timeout
+  );
+}
+
+/**
+ * API POST request (JSON body)
+ */
+async function apiPost<T>(
+  path: string,
+  data?: unknown,
+  timeout: number = DEFAULT_TIMEOUT
+): Promise<T> {
+  return fetchWithTimeout<T>(
+    `${API_BASE_URL}${path}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    },
+    timeout
+  );
+}
+
+/**
+ * API POST request (FormData body)
+ */
+async function apiPostFormData<T>(
+  path: string,
+  formData: FormData,
+  timeout: number = DEFAULT_TIMEOUT
+): Promise<T> {
+  // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
+  return fetchWithTimeout<T>(
+    `${API_BASE_URL}${path}`,
+    {
+      method: "POST",
+      body: formData,
+    },
+    timeout
+  );
+}
+
+/**
+ * API PUT request
+ */
+async function apiPut<T>(
+  path: string,
+  data?: unknown,
+  timeout: number = DEFAULT_TIMEOUT
+): Promise<T> {
+  return fetchWithTimeout<T>(
+    `${API_BASE_URL}${path}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    },
+    timeout
+  );
+}
+
+/**
+ * API DELETE request
+ */
+async function apiDelete<T>(
+  path: string,
+  timeout: number = DEFAULT_TIMEOUT
+): Promise<T> {
+  return fetchWithTimeout<T>(
+    `${API_BASE_URL}${path}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+    timeout
+  );
+}
 
 // Types
 export interface ImageUploadResponse {
@@ -50,10 +183,7 @@ export async function uploadImage(file: File): Promise<ImageUploadResponse> {
   const formData = new FormData();
   formData.append("file", file);
 
-  // Don't set Content-Type header - let axios handle boundary for multipart/form-data
-  const response = await api.post<ImageUploadResponse>("/api/upload/image", formData);
-
-  return response.data;
+  return apiPostFormData<ImageUploadResponse>("/api/upload/image", formData);
 }
 
 // Epic 2: OCR Processing API (Story 2.2)
@@ -81,12 +211,12 @@ export async function processOcr(imagePath: string): Promise<OcrProcessResponse>
     normalizedPath = url.pathname; // Extract /uploads/... from full URL
   }
 
-  // Use ocrApi with longer timeout for OCR processing
-  const response = await ocrApi.post<OcrProcessResponse>("/api/ocr/process", {
-    image_path: normalizedPath,
-  });
-
-  return response.data;
+  // Use longer timeout for OCR processing
+  return apiPost<OcrProcessResponse>(
+    "/api/ocr/process",
+    { image_path: normalizedPath },
+    OCR_TIMEOUT
+  );
 }
 
 // Epic 2: Morphological Analysis API (Story 2.3)
@@ -113,16 +243,11 @@ export async function analyzeMorphology(
   text: string,
   filterParticles: boolean = true
 ): Promise<MorphologyAnalyzeResponse> {
-  const response = await api.post<MorphologyAnalyzeResponse>(
-    "/api/morphology/analyze",
-    {
-      text,
-      filter_particles: filterParticles,
-      include_reading_hiragana: true,
-    }
-  );
-
-  return response.data;
+  return apiPost<MorphologyAnalyzeResponse>("/api/morphology/analyze", {
+    text,
+    filter_particles: filterParticles,
+    include_reading_hiragana: true,
+  });
 }
 
 // Epic 3: Vocabulary API (Story 2.5 - 단어 저장)
@@ -141,7 +266,7 @@ export interface VocabResponse {
   meaning: string | null;
   pos: string | null;
   source_img: string | null;
-  has_image: boolean;  // Story 3.4: 이미지 존재 여부 (DB에 저장된 이미지)
+  has_image: boolean; // Story 3.4: 이미지 존재 여부 (DB에 저장된 이미지)
   created_at: string;
   next_review: string | null;
   reps: number;
@@ -168,17 +293,12 @@ export interface BulkVocabResponse {
 export async function saveWordsBulk(
   words: VocabCreate[]
 ): Promise<BulkVocabResponse> {
-  const response = await api.post<BulkVocabResponse>("/api/vocab/bulk", {
-    words,
-  });
-
-  return response.data;
+  return apiPost<BulkVocabResponse>("/api/vocab/bulk", { words });
 }
 
 // Story 3.1: 단어 추가
 export async function createWord(word: VocabCreate): Promise<VocabResponse> {
-  const response = await api.post<VocabResponse>("/api/vocab", word);
-  return response.data;
+  return apiPost<VocabResponse>("/api/vocab", word);
 }
 
 // Story 3.2: 단어 수정
@@ -193,13 +313,12 @@ export async function updateWord(
   id: number,
   data: VocabUpdate
 ): Promise<VocabResponse> {
-  const response = await api.put<VocabResponse>(`/api/vocab/${id}`, data);
-  return response.data;
+  return apiPut<VocabResponse>(`/api/vocab/${id}`, data);
 }
 
 // Story 3.2: 단어 삭제
 export async function deleteWord(id: number): Promise<void> {
-  await api.delete(`/api/vocab/${id}`);
+  await apiDelete(`/api/vocab/${id}`);
 }
 
 // Epic 4: Review System
@@ -245,35 +364,32 @@ export interface AnswerResponse {
 }
 
 // Story 4.1: 오늘의 복습 카드 조회
-export async function getReviewCards(limit: number = 20): Promise<ReviewCardsResponse> {
-  const response = await api.get<ReviewCardsResponse>("/api/review/cards", {
-    params: { limit },
-  });
-  return response.data;
+export async function getReviewCards(
+  limit: number = 20
+): Promise<ReviewCardsResponse> {
+  return apiGet<ReviewCardsResponse>("/api/review/cards", { limit });
 }
 
 // Story 4.1: 복습 통계
 export async function getReviewStats(): Promise<ReviewStats> {
-  const response = await api.get<ReviewStats>("/api/review/stats");
-  return response.data;
+  return apiGet<ReviewStats>("/api/review/stats");
 }
 
 // Story 4.3: 학습 결과 제출
 export async function submitAnswer(data: AnswerRequest): Promise<AnswerResponse> {
-  const response = await api.post<AnswerResponse>("/api/review/answer", data);
-  return response.data;
+  return apiPost<AnswerResponse>("/api/review/answer", data);
 }
 
 // Epic 5: Grammar Management
 
 export interface GrammarCreate {
   title: string;
-  explanation?: string | null;  // 문법 설명 및 용법
-  example_jp?: string | null;   // 일본어 예문
-  example_kr?: string | null;   // 예문 해석 (한국어)
-  level?: string | null;        // N5 ~ N1
-  similar_patterns?: string | null;  // 유사 문법
-  usage_notes?: string | null;  // 사용 주의사항
+  explanation?: string | null; // 문법 설명 및 용법
+  example_jp?: string | null; // 일본어 예문
+  example_kr?: string | null; // 예문 해석 (한국어)
+  level?: string | null; // N5 ~ N1
+  similar_patterns?: string | null; // 유사 문법
+  usage_notes?: string | null; // 사용 주의사항
 }
 
 export interface GrammarUpdate {
@@ -319,50 +435,49 @@ export interface GrammarStats {
 
 // Story 5.1: 문법 항목 추가
 export async function createGrammar(data: GrammarCreate): Promise<GrammarResponse> {
-  const response = await api.post<GrammarResponse>("/api/grammar", data);
-  return response.data;
+  return apiPost<GrammarResponse>("/api/grammar", data);
 }
 
 // Story 5.2: 문법 목록 조회
-export async function getGrammarList(params: {
-  page?: number;
-  page_size?: number;
-  search?: string;
-  level?: string;
-  sort_by?: string;
-  sort_order?: string;
-} = {}): Promise<GrammarListResponse> {
-  const response = await api.get<GrammarListResponse>("/api/grammar", { params });
-  return response.data;
+export async function getGrammarList(
+  params: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    level?: string;
+    sort_by?: string;
+    sort_order?: string;
+  } = {}
+): Promise<GrammarListResponse> {
+  return apiGet<GrammarListResponse>("/api/grammar", params);
 }
 
 // Story 5.2: 단일 문법 조회
 export async function getGrammarById(id: number): Promise<GrammarResponse> {
-  const response = await api.get<GrammarResponse>(`/api/grammar/${id}`);
-  return response.data;
+  return apiGet<GrammarResponse>(`/api/grammar/${id}`);
 }
 
 // Story 5.1: 문법 수정
-export async function updateGrammar(id: number, data: GrammarUpdate): Promise<GrammarResponse> {
-  const response = await api.put<GrammarResponse>(`/api/grammar/${id}`, data);
-  return response.data;
+export async function updateGrammar(
+  id: number,
+  data: GrammarUpdate
+): Promise<GrammarResponse> {
+  return apiPut<GrammarResponse>(`/api/grammar/${id}`, data);
 }
 
 // Story 5.1: 문법 삭제
 export async function deleteGrammar(id: number): Promise<void> {
-  await api.delete(`/api/grammar/${id}`);
+  await apiDelete(`/api/grammar/${id}`);
 }
 
 // Story 5.3: JLPT 레벨 목록
 export async function getJlptLevels(): Promise<string[]> {
-  const response = await api.get<string[]>("/api/grammar/levels");
-  return response.data;
+  return apiGet<string[]>("/api/grammar/levels");
 }
 
 // 문법 통계
 export async function getGrammarStats(): Promise<GrammarStats> {
-  const response = await api.get<GrammarStats>("/api/grammar/stats/summary");
-  return response.data;
+  return apiGet<GrammarStats>("/api/grammar/stats/summary");
 }
 
 // Epic 6: Kanji Learning
@@ -383,39 +498,39 @@ export interface KanjiAnalyzeResponse {
 }
 
 // Story 6.1: 단어에서 한자 추출
-export async function analyzeKanjiInText(text: string): Promise<KanjiAnalyzeResponse> {
-  const response = await api.post<KanjiAnalyzeResponse>("/api/kanji/analyze", { text });
-  return response.data;
+export async function analyzeKanjiInText(
+  text: string
+): Promise<KanjiAnalyzeResponse> {
+  return apiPost<KanjiAnalyzeResponse>("/api/kanji/analyze", { text });
 }
 
 // Story 6.1: 단어에서 한자 정보 조회
 export async function getKanjiInWord(word: string): Promise<KanjiAnalyzeResponse> {
-  const response = await api.get<KanjiAnalyzeResponse>(`/api/kanji/word/${encodeURIComponent(word)}`);
-  return response.data;
+  return apiGet<KanjiAnalyzeResponse>(
+    `/api/kanji/word/${encodeURIComponent(word)}`
+  );
 }
 
 // Story 6.2 & 6.3: 단일 한자 정보 조회
 export async function getKanjiInfo(character: string): Promise<KanjiInfo> {
-  const response = await api.get<KanjiInfo>(`/api/kanji/info/${encodeURIComponent(character)}`);
-  return response.data;
+  return apiGet<KanjiInfo>(`/api/kanji/info/${encodeURIComponent(character)}`);
 }
 
 // 단어장 항목의 한자 조회
 export async function getVocabKanji(vocabId: number): Promise<KanjiAnalyzeResponse> {
-  const response = await api.get<KanjiAnalyzeResponse>(`/api/kanji/vocab/${vocabId}/kanji`);
-  return response.data;
+  return apiGet<KanjiAnalyzeResponse>(`/api/kanji/vocab/${vocabId}/kanji`);
 }
 
 // Epic 7: Statistics Dashboard
 
 export interface OverviewStats {
   total_words: number;
-  learned_words: number;  // reps > 0
-  mastered_words: number;  // reps >= 5
-  new_words: number;  // reps == 0
+  learned_words: number; // reps > 0
+  mastered_words: number; // reps >= 5
+  new_words: number; // reps == 0
   due_today: number;
   total_grammar: number;
-  learning_progress: number;  // percentage
+  learning_progress: number; // percentage
 }
 
 export interface DailyStats {
@@ -448,36 +563,27 @@ export interface DashboardResponse {
 
 // Story 7.1: 전체 단어 수/진행도 조회
 export async function getOverviewStats(): Promise<OverviewStats> {
-  const response = await api.get<OverviewStats>("/api/stats/overview");
-  return response.data;
+  return apiGet<OverviewStats>("/api/stats/overview");
 }
 
 // Story 7.2: 일별 학습 통계
 export async function getDailyStats(days: number = 7): Promise<DailyStats[]> {
-  const response = await api.get<DailyStats[]>("/api/stats/daily", {
-    params: { days },
-  });
-  return response.data;
+  return apiGet<DailyStats[]>("/api/stats/daily", { days });
 }
 
 // Story 7.3: 정답률 그래프 데이터
 export async function getAccuracyTrend(days: number = 14): Promise<AccuracyData> {
-  const response = await api.get<AccuracyData>("/api/stats/accuracy", {
-    params: { days },
-  });
-  return response.data;
+  return apiGet<AccuracyData>("/api/stats/accuracy", { days });
 }
 
 // 학습 스트릭 조회
 export async function getStreakInfo(): Promise<StreakInfo> {
-  const response = await api.get<StreakInfo>("/api/stats/streak");
-  return response.data;
+  return apiGet<StreakInfo>("/api/stats/streak");
 }
 
 // 대시보드 전체 데이터 (단일 요청)
 export async function getDashboard(): Promise<DashboardResponse> {
-  const response = await api.get<DashboardResponse>("/api/stats/dashboard");
-  return response.data;
+  return apiGet<DashboardResponse>("/api/stats/dashboard");
 }
 
 // Epic 8: Export/Import
@@ -501,8 +607,7 @@ export interface ImportResult {
 
 // Export statistics
 export async function getExportStats(): Promise<ExportStats> {
-  const response = await api.get<ExportStats>("/api/data/stats");
-  return response.data;
+  return apiGet<ExportStats>("/api/data/stats");
 }
 
 // Export URLs (for direct download)
@@ -528,57 +633,67 @@ export function getFullBackupUrl(): string {
 
 // Story 8.2: 데이터 가져오기
 
-export async function importVocabCsv(file: File, skipDuplicates: boolean = true): Promise<ImportResult> {
+export async function importVocabCsv(
+  file: File,
+  skipDuplicates: boolean = true
+): Promise<ImportResult> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await api.post<ImportResult>(
+  return apiPostFormData<ImportResult>(
     `/api/data/vocab/csv?skip_duplicates=${skipDuplicates}`,
     formData
   );
-  return response.data;
 }
 
-export async function importVocabJson(file: File, skipDuplicates: boolean = true): Promise<ImportResult> {
+export async function importVocabJson(
+  file: File,
+  skipDuplicates: boolean = true
+): Promise<ImportResult> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await api.post<ImportResult>(
+  return apiPostFormData<ImportResult>(
     `/api/data/vocab/json?skip_duplicates=${skipDuplicates}`,
     formData
   );
-  return response.data;
 }
 
-export async function importGrammarCsv(file: File, skipDuplicates: boolean = true): Promise<ImportResult> {
+export async function importGrammarCsv(
+  file: File,
+  skipDuplicates: boolean = true
+): Promise<ImportResult> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await api.post<ImportResult>(
+  return apiPostFormData<ImportResult>(
     `/api/data/grammar/csv?skip_duplicates=${skipDuplicates}`,
     formData
   );
-  return response.data;
 }
 
-export async function importGrammarJson(file: File, skipDuplicates: boolean = true): Promise<ImportResult> {
+export async function importGrammarJson(
+  file: File,
+  skipDuplicates: boolean = true
+): Promise<ImportResult> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await api.post<ImportResult>(
+  return apiPostFormData<ImportResult>(
     `/api/data/grammar/json?skip_duplicates=${skipDuplicates}`,
     formData
   );
-  return response.data;
 }
 
-export async function importFullBackup(file: File, skipDuplicates: boolean = true): Promise<ImportResult> {
+export async function importFullBackup(
+  file: File,
+  skipDuplicates: boolean = true
+): Promise<ImportResult> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await api.post<ImportResult>(
+  return apiPostFormData<ImportResult>(
     `/api/data/all/json?skip_duplicates=${skipDuplicates}`,
     formData
   );
-  return response.data;
 }
