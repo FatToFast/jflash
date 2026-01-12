@@ -291,8 +291,91 @@ git push origin <현재브랜치>
 
 ---
 
+---
+
+## 스크립트
+
+### npm run split
+vocabulary.json을 words.json과 sentences.json으로 분리합니다.
+
+```bash
+npm run split
+```
+
+### npm run archive
+마스터된 항목(reps ≥ 5, interval ≥ 30)을 JLPT 레벨별 파일로 아카이브합니다.
+
+```bash
+# Supabase에서 SRS 데이터 가져와서 아카이브
+npm run archive
+
+# 또는 로컬 파일 사용
+# 1. 브라우저에서: localStorage.getItem('jflash_srs_state')
+# 2. scripts/srs-state.json에 저장
+# 3. npm run archive
+```
+
+### npm run sync:supabase
+JSON 파일을 Supabase vocabulary 테이블에 동기화합니다.
+
+```bash
+npm run sync:supabase
+```
+
+**GitHub Actions 자동 동기화**:
+- `frontend/public/data/**` 파일이 main에 push되면 자동 실행
+- GitHub Secrets 필요: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
+
+---
+
+## 데이터 파일 구조
+
+```
+frontend/public/data/
+├── words.json          # 학습 중인 단어 (pos ≠ 文)
+├── sentences.json      # 학습 중인 문장 (pos = 文)
+└── mastered/           # 마스터된 항목 (JLPT 레벨별)
+    ├── N5.json
+    ├── N4.json
+    ├── N3.json
+    ├── N2.json
+    ├── N1.json
+    └── unknown.json
+```
+
+---
+
+## Supabase 테이블
+
+### vocabulary
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| id | INTEGER | PK |
+| kanji | TEXT | 단어/문장 |
+| reading | TEXT | 읽기 |
+| meaning | TEXT | 의미 |
+| pos | TEXT | 품사 |
+| jlpt_level | TEXT | JLPT 레벨 |
+| example_sentence | TEXT | 예문 |
+| example_meaning | TEXT | 예문 해석 |
+| notes | TEXT | 추가 설명 |
+| status | TEXT | active / mastered |
+
+### srs_records
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| id | SERIAL | PK |
+| device_id | UUID | 기기 식별자 |
+| vocab_id | INTEGER | 단어 ID |
+| interval | INTEGER | 복습 간격 (일) |
+| ease_factor | REAL | 난이도 계수 |
+| next_review | TIMESTAMP | 다음 복습일 |
+| reps | INTEGER | 정답 횟수 |
+
+---
+
 ## 버전 정보
 
-- **앱 버전**: 1.2.0
-- **DB 스키마**: v2 (확장 필드 포함)
-- **복습 모드**: 4종 (기본, 역방향, 듣기, 빈칸)
+- **앱 버전**: 2.0.0
+- **데이터**: Static JSON + Supabase 동기화
+- **복습 모드**: 5종 (기본, 역방향, 듣기, 빈칸, 타이핑)
