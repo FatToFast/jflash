@@ -15,6 +15,7 @@ import {
   getDueCards,
   getNewCards,
   updateSRS,
+  runMigrationIfNeeded,
 } from "@/lib/static-data";
 import { speakJapanese, initializeVoices } from "@/lib/tts";
 import {
@@ -83,6 +84,9 @@ function ReviewPageContent() {
     setSessionState("loading");
 
     try {
+      // SM-2 → FSRS 마이그레이션 (필요한 경우)
+      runMigrationIfNeeded();
+
       const vocabType: VocabType = isSentenceMode ? "sentence" : "word";
       const dueCards = await getDueCards(vocabType);
       const newCards = await getNewCards(vocabType, 5);

@@ -13,6 +13,7 @@ import {
   loadAllMastered,
   getStats,
   getSRSStates,
+  runMigrationIfNeeded,
 } from "@/lib/static-data";
 import {
   getStreak,
@@ -64,6 +65,12 @@ export default function StatsPage() {
     const loadAllStats = async () => {
       setLoading(true);
       try {
+        // SM-2 → FSRS 마이그레이션 (필요한 경우)
+        const migration = runMigrationIfNeeded();
+        if (migration.migrated > 0) {
+          console.log(`[Migration] SM-2 → FSRS: ${migration.migrated} items migrated`);
+        }
+
         const [words, sentences, mastered] = await Promise.all([
           loadWords(),
           loadSentences(),
