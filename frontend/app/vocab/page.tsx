@@ -172,12 +172,12 @@ export default function VocabPage() {
         <header className="mb-12">
           <Link
             href="/"
-            className="text-[10px] tracking-[0.3em] text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="text-[10px] tracking-[0.3em] text-neutral-500 hover:text-neutral-600 transition-colors"
           >
             ← J-FLASH
           </Link>
           <h1 className="mt-3 text-lg ">単語帳</h1>
-          <p className="mt-1 text-xs text-neutral-400">
+          <p className="mt-1 text-xs text-neutral-500">
             {typeFilteredList.length}개
             {debouncedSearch && ` / 검색: ${filteredList.length}개`}
           </p>
@@ -199,7 +199,7 @@ export default function VocabPage() {
               className={`pb-2 text-sm transition-colors ${
                 dataSource === opt.value
                   ? "border-b border-neutral-900 text-neutral-900"
-                  : "text-neutral-400 hover:text-neutral-600"
+                  : "text-neutral-500 hover:text-neutral-600"
               }`}
             >
               {opt.label}
@@ -223,7 +223,7 @@ export default function VocabPage() {
               className={`text-xs transition-colors ${
                 filterType === opt.value
                   ? "text-neutral-900"
-                  : "text-neutral-400 hover:text-neutral-600"
+                  : "text-neutral-500 hover:text-neutral-600"
               }`}
             >
               {opt.label}
@@ -238,7 +238,7 @@ export default function VocabPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="검색..."
-            className="w-full border-b border-neutral-200 bg-transparent py-2 text-sm outline-none placeholder:text-neutral-300 focus:border-neutral-900"
+            className="w-full border-b border-neutral-200 bg-transparent py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-900"
           />
         </div>
 
@@ -271,14 +271,14 @@ export default function VocabPage() {
         {/* Loading */}
         {loading && (
           <div className="py-20 text-center">
-            <p className="text-sm text-neutral-400">불러오는 중...</p>
+            <p className="text-sm text-neutral-500">불러오는 중...</p>
           </div>
         )}
 
         {/* Empty */}
         {!loading && paginatedList.length === 0 && (
           <div className="py-20 text-center">
-            <p className="text-sm text-neutral-400">
+            <p className="text-sm text-neutral-500">
               {debouncedSearch ? "검색 결과 없음" : "단어 없음"}
             </p>
           </div>
@@ -296,18 +296,18 @@ export default function VocabPage() {
                   onClick={() =>
                     playPronunciation(vocab.reading || vocab.kanji)
                   }
-                  className="text-neutral-300 hover:text-neutral-600 transition-colors"
+                  className="text-neutral-400 hover:text-neutral-600 transition-colors"
                 >
                   ▶
                 </button>
                 <div className="flex-1 min-w-0">
                   <p className="text-lg  truncate">{vocab.kanji}</p>
-                  <p className="text-xs text-neutral-400 truncate">
+                  <p className="text-xs text-neutral-500 truncate">
                     {vocab.reading && `${vocab.reading} · `}
                     {vocab.meaning || "—"}
                   </p>
                 </div>
-                <span className="text-[10px] text-neutral-300">
+                <span className="text-[10px] text-neutral-400">
                   {getStatusLabel(vocab.id)}
                 </span>
               </div>
@@ -321,17 +321,17 @@ export default function VocabPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="text-xs text-neutral-400 hover:text-neutral-600 disabled:opacity-30"
+              className="text-xs text-neutral-500 hover:text-neutral-600 disabled:opacity-30"
             >
               ←
             </button>
-            <span className="text-xs text-neutral-400">
+            <span className="text-xs text-neutral-500">
               {page} / {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="text-xs text-neutral-400 hover:text-neutral-600 disabled:opacity-30"
+              className="text-xs text-neutral-500 hover:text-neutral-600 disabled:opacity-30"
             >
               →
             </button>

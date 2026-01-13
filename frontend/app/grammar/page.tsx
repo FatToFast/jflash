@@ -74,12 +74,12 @@ export default function GrammarPage() {
         <header className="mb-12">
           <Link
             href="/"
-            className="text-[10px] tracking-[0.3em] text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="text-[10px] tracking-[0.3em] text-neutral-500 hover:text-neutral-600 transition-colors"
           >
             ← J-FLASH
           </Link>
           <h1 className="mt-3 text-lg ">文法</h1>
-          <p className="mt-1 text-xs text-neutral-400">
+          <p className="mt-1 text-xs text-neutral-500">
             {filteredList.length}개
           </p>
         </header>
@@ -124,21 +124,21 @@ export default function GrammarPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="검색..."
-            className="w-full border-b border-neutral-200 bg-transparent py-2 text-sm outline-none placeholder:text-neutral-300 focus:border-neutral-900"
+            className="w-full border-b border-neutral-200 bg-transparent py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-900"
           />
         </div>
 
         {/* Loading */}
         {loading && (
           <div className="py-20 text-center">
-            <p className="text-sm text-neutral-400">불러오는 중...</p>
+            <p className="text-sm text-neutral-500">불러오는 중...</p>
           </div>
         )}
 
         {/* Empty */}
         {!loading && paginatedList.length === 0 && (
           <div className="py-20 text-center">
-            <p className="text-sm text-neutral-400">
+            <p className="text-sm text-neutral-500">
               {debouncedSearch || levelFilter ? "검색 결과 없음" : "문법 없음"}
             </p>
           </div>
@@ -156,13 +156,13 @@ export default function GrammarPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-base">{grammar.title}</span>
                   {grammar.level && (
-                    <span className="text-[10px] text-neutral-400">
+                    <span className="text-[10px] text-neutral-500">
                       {grammar.level}
                     </span>
                   )}
                 </div>
                 {grammar.explanation && (
-                  <p className="mt-1 text-xs text-neutral-400 truncate">
+                  <p className="mt-1 text-xs text-neutral-500 truncate">
                     {grammar.explanation}
                   </p>
                 )}
@@ -177,17 +177,17 @@ export default function GrammarPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="text-xs text-neutral-400 hover:text-neutral-600 disabled:opacity-30"
+              className="text-xs text-neutral-500 hover:text-neutral-600 disabled:opacity-30"
             >
               ←
             </button>
-            <span className="text-xs text-neutral-400">
+            <span className="text-xs text-neutral-500">
               {page} / {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="text-xs text-neutral-400 hover:text-neutral-600 disabled:opacity-30"
+              className="text-xs text-neutral-500 hover:text-neutral-600 disabled:opacity-30"
             >
               →
             </button>
@@ -225,14 +225,14 @@ export default function GrammarPage() {
               <div className="flex items-center gap-2">
                 <h2 className="text-lg ">{selectedGrammar.title}</h2>
                 {selectedGrammar.level && (
-                  <span className="text-xs text-neutral-400">
+                  <span className="text-xs text-neutral-500">
                     {selectedGrammar.level}
                   </span>
                 )}
               </div>
               <button
                 onClick={() => setSelectedGrammar(null)}
-                className="text-neutral-400 hover:text-neutral-600"
+                className="text-neutral-500 hover:text-neutral-600"
               >
                 ×
               </button>

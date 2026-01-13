@@ -110,7 +110,7 @@ export default function DataPage() {
         <header className="mb-12">
           <Link
             href="/"
-            className="text-[10px] tracking-[0.3em] text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="text-[10px] tracking-[0.3em] text-neutral-500 hover:text-neutral-600 transition-colors"
           >
             ← J-FLASH
           </Link>
@@ -129,7 +129,7 @@ export default function DataPage() {
         {/* Loading */}
         {loading && (
           <div className="py-20 text-center">
-            <p className="text-sm text-neutral-400">불러오는 중...</p>
+            <p className="text-sm text-neutral-500">불러오는 중...</p>
           </div>
         )}
 
@@ -138,11 +138,11 @@ export default function DataPage() {
           <div className="mb-12 grid grid-cols-2 gap-px bg-neutral-100">
             <div className="bg-white p-6 text-center">
               <p className="text-2xl ">{stats.vocabulary_count}</p>
-              <p className="mt-1 text-xs text-neutral-400">단어</p>
+              <p className="mt-1 text-xs text-neutral-500">단어</p>
             </div>
             <div className="bg-white p-6 text-center">
               <p className="text-2xl ">{stats.grammar_count}</p>
-              <p className="mt-1 text-xs text-neutral-400">문법</p>
+              <p className="mt-1 text-xs text-neutral-500">문법</p>
             </div>
           </div>
         )}
@@ -241,7 +241,7 @@ export default function DataPage() {
                   JSON
                 </button>
               </div>
-              <p className="mt-2 text-[10px] text-neutral-400">
+              <p className="mt-2 text-[10px] text-neutral-500">
                 CSV: kanji, reading, meaning, pos
               </p>
             </div>
@@ -265,7 +265,7 @@ export default function DataPage() {
                   JSON
                 </button>
               </div>
-              <p className="mt-2 text-[10px] text-neutral-400">
+              <p className="mt-2 text-[10px] text-neutral-500">
                 CSV: title, meaning, description, example, example_meaning, level
               </p>
             </div>
@@ -301,7 +301,7 @@ export default function DataPage() {
                   <p>단어: {importResult.vocabulary_imported}개 추가</p>
                 )}
                 {importResult.vocabulary_skipped > 0 && (
-                  <p className="text-neutral-400">
+                  <p className="text-neutral-500">
                     단어 {importResult.vocabulary_skipped}개 건너뜀
                   </p>
                 )}
@@ -309,7 +309,7 @@ export default function DataPage() {
                   <p>문법: {importResult.grammar_imported}개 추가</p>
                 )}
                 {importResult.grammar_skipped > 0 && (
-                  <p className="text-neutral-400">
+                  <p className="text-neutral-500">
                     문법 {importResult.grammar_skipped}개 건너뜀
                   </p>
                 )}
@@ -338,7 +338,7 @@ export default function DataPage() {
 
           <div className="space-y-6">
             <div>
-              <p className="text-xs text-neutral-400 mb-2">단어장 CSV</p>
+              <p className="text-xs text-neutral-500 mb-2">단어장 CSV</p>
               <pre className="bg-neutral-50 p-4 text-xs overflow-x-auto border border-neutral-100">
 {`kanji,reading,meaning,pos
 食べる,たべる,먹다,동사
@@ -347,7 +347,7 @@ export default function DataPage() {
             </div>
 
             <div>
-              <p className="text-xs text-neutral-400 mb-2">단어장 JSON</p>
+              <p className="text-xs text-neutral-500 mb-2">단어장 JSON</p>
               <pre className="bg-neutral-50 p-4 text-xs overflow-x-auto border border-neutral-100">
 {`{
   "items": [

@@ -349,7 +349,7 @@ function ReviewPageContent() {
       return (
         <div className="flex flex-col items-center justify-center h-full">
           <p className="text-lg text-neutral-600">{currentCard.meaning}</p>
-          <p className="mt-8 text-xs text-neutral-400">이 의미의 단어는?</p>
+          <p className="mt-8 text-xs text-neutral-500">이 의미의 단어는?</p>
         </div>
       );
     }
@@ -366,7 +366,7 @@ function ReviewPageContent() {
           >
             <span className="text-2xl">{isSpeaking ? "◉" : "▶"}</span>
           </button>
-          <p className="mt-8 text-xs text-neutral-400">발음을 듣고 맞춰보세요</p>
+          <p className="mt-8 text-xs text-neutral-500">발음을 듣고 맞춰보세요</p>
         </div>
       );
     }
@@ -375,7 +375,7 @@ function ReviewPageContent() {
       if (!currentCard.example_sentence) {
         return (
           <div className="flex flex-col items-center justify-center h-full">
-            <p className="text-sm text-neutral-400">예문이 없습니다</p>
+            <p className="text-sm text-neutral-500">예문이 없습니다</p>
           </div>
         );
       }
@@ -389,7 +389,7 @@ function ReviewPageContent() {
               {currentCard.example_meaning}
             </p>
           )}
-          <p className="mt-8 text-xs text-neutral-400">빈칸에 들어갈 단어는?</p>
+          <p className="mt-8 text-xs text-neutral-500">빈칸에 들어갈 단어는?</p>
         </div>
       );
     }
@@ -429,7 +429,7 @@ function ReviewPageContent() {
         <p className={`${isSentenceMode ? "text-xl leading-relaxed text-center" : "text-4xl"}`}>
           {currentCard.kanji}
         </p>
-        <p className="mt-8 text-xs text-neutral-400">탭하여 확인</p>
+        <p className="mt-8 text-xs text-neutral-500">탭하여 확인</p>
       </div>
     );
   };
@@ -450,7 +450,7 @@ function ReviewPageContent() {
         {reviewMode === "feynman" && feynmanSubmitted && feynmanInput && (
           <div className="mt-4 pt-4 border-t border-neutral-100 w-full space-y-3">
             <div>
-              <p className="text-xs text-neutral-400 mb-2">내 설명:</p>
+              <p className="text-xs text-neutral-500 mb-2">내 설명:</p>
               <p className="text-sm text-neutral-600 bg-neutral-50 p-3 rounded">
                 {feynmanInput}
               </p>
@@ -459,7 +459,7 @@ function ReviewPageContent() {
             {/* AI Feedback */}
             {feynmanLoading && (
               <div className="text-center py-2">
-                <p className="text-xs text-neutral-400">AI 평가 중...</p>
+                <p className="text-xs text-neutral-500">AI 평가 중...</p>
               </div>
             )}
 
@@ -503,12 +503,12 @@ function ReviewPageContent() {
               className="group text-sm text-neutral-500 hover:text-neutral-700 transition-colors"
             >
               <span className="inline-flex items-center gap-1">
-                <span className="text-neutral-300 group-hover:text-neutral-500 transition-colors">▶</span>
+                <span className="text-neutral-400 group-hover:text-neutral-500 transition-colors">▶</span>
                 {currentCard.example_sentence}
               </span>
             </button>
             {currentCard.example_meaning && (
-              <p className="mt-1 text-xs text-neutral-400">
+              <p className="mt-1 text-xs text-neutral-500">
                 {currentCard.example_meaning}
               </p>
             )}
@@ -535,7 +535,7 @@ function ReviewPageContent() {
         <header className="mb-12">
           <Link
             href="/"
-            className="text-[10px] tracking-[0.3em] text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="text-[10px] tracking-[0.3em] text-neutral-500 hover:text-neutral-600 transition-colors"
           >
             ← J-FLASH
           </Link>
@@ -547,7 +547,7 @@ function ReviewPageContent() {
         {/* Loading */}
         {sessionState === "loading" && (
           <div className="py-20 text-center">
-            <p className="text-sm text-neutral-400">불러오는 중...</p>
+            <p className="text-sm text-neutral-500">불러오는 중...</p>
           </div>
         )}
 
@@ -557,7 +557,7 @@ function ReviewPageContent() {
             {/* Count */}
             <div className="text-center py-12 border-y border-neutral-100">
               <p className="text-4xl">{dueCount}</p>
-              <p className="mt-2 text-xs text-neutral-400">
+              <p className="mt-2 text-xs text-neutral-500">
                 복습할 {isSentenceMode ? "문장" : "단어"}
               </p>
             </div>
@@ -565,7 +565,7 @@ function ReviewPageContent() {
             {/* Mode selection (word mode only) */}
             {!isSentenceMode && (
               <div className="space-y-3">
-                <p className="text-xs text-neutral-400">모드</p>
+                <p className="text-xs text-neutral-500">모드</p>
                 <div className="grid grid-cols-5 gap-1">
                   {[
                     { value: "normal", label: "기본" },
@@ -588,7 +588,7 @@ function ReviewPageContent() {
                   ))}
                 </div>
                 {reviewMode === "feynman" && (
-                  <p className="text-[10px] text-neutral-400 mt-2">
+                  <p className="text-[10px] text-neutral-500 mt-2">
                     파인만 기법: 단어를 자신의 말로 설명하며 학습
                   </p>
                 )}
@@ -631,7 +631,7 @@ function ReviewPageContent() {
                 </p>
                 <Link
                   href="/vocab"
-                  className="inline-block mt-4 text-sm text-neutral-400 hover:text-neutral-600 transition-colors"
+                  className="inline-block mt-4 text-sm text-neutral-500 hover:text-neutral-600 transition-colors"
                 >
                   단어장 보기 →
                 </Link>
@@ -639,7 +639,7 @@ function ReviewPageContent() {
             )}
 
             {/* Shortcuts */}
-            <div className="text-xs text-neutral-400 space-y-1">
+            <div className="text-xs text-neutral-500 space-y-1">
               <p>Space: 뒤집기 / ←→: 모름·앎 / P: 발음</p>
             </div>
           </div>
@@ -649,7 +649,7 @@ function ReviewPageContent() {
         {sessionState === "studying" && currentCard && (
           <div className="space-y-6">
             {/* Progress */}
-            <div className="flex items-center justify-between text-xs text-neutral-400">
+            <div className="flex items-center justify-between text-xs text-neutral-500">
               <span>
                 {currentIndex + 1} / {cards.length}
               </span>
@@ -676,7 +676,7 @@ function ReviewPageContent() {
               } transition-colors`}
             >
               {/* Mode indicator */}
-              <span className="absolute top-3 left-3 text-[10px] text-neutral-300">
+              <span className="absolute top-3 left-3 text-[10px] text-neutral-400">
                 {getModeLabel(reviewMode)}
               </span>
               {!isFlipped ? renderFront() : renderBack()}
@@ -687,7 +687,7 @@ function ReviewPageContent() {
               <button
                 onClick={playPronunciation}
                 disabled={isSpeaking}
-                className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors disabled:opacity-50"
+                className="text-xs text-neutral-500 hover:text-neutral-600 transition-colors disabled:opacity-50"
               >
                 {isSpeaking ? "재생 중..." : "▶ 발음 듣기"}
               </button>
@@ -720,17 +720,17 @@ function ReviewPageContent() {
           <div className="space-y-8">
             <div className="text-center py-12 border-y border-neutral-100">
               <p className="text-4xl">{accuracy}%</p>
-              <p className="mt-2 text-xs text-neutral-400">정답률</p>
+              <p className="mt-2 text-xs text-neutral-500">정답률</p>
             </div>
 
             <div className="flex justify-center gap-8 text-center">
               <div>
                 <p className="text-2xl">{sessionResult.correct}</p>
-                <p className="text-xs text-neutral-400">정답</p>
+                <p className="text-xs text-neutral-500">정답</p>
               </div>
               <div>
                 <p className="text-2xl">{sessionResult.incorrect}</p>
-                <p className="text-xs text-neutral-400">오답</p>
+                <p className="text-xs text-neutral-500">오답</p>
               </div>
             </div>
 
@@ -761,7 +761,7 @@ function ReviewPageContent() {
 function ReviewPageLoading() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center">
-      <p className="text-sm text-neutral-400">로딩 중...</p>
+      <p className="text-sm text-neutral-500">로딩 중...</p>
     </div>
   );
 }

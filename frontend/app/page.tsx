@@ -20,7 +20,7 @@ export default function Home() {
       <main className="mx-auto max-w-sm px-6 py-20">
         {/* Header */}
         <header className="mb-16">
-          <p className="text-[10px] tracking-[0.3em] text-neutral-400">
+          <p className="text-[10px] tracking-[0.3em] text-neutral-500">
             J-FLASH
           </p>
           <h1 className="mt-1 text-xl text-neutral-900">日本語</h1>
@@ -33,7 +33,7 @@ export default function Home() {
             className="flex items-center justify-between border-b border-neutral-100 py-4 text-neutral-900 transition-colors hover:bg-neutral-50"
           >
             <span className="text-sm">단어 복습</span>
-            <span className="text-xs text-neutral-400">→</span>
+            <span className="text-xs text-neutral-500">→</span>
           </Link>
 
           <Link
@@ -41,7 +41,7 @@ export default function Home() {
             className="flex items-center justify-between border-b border-neutral-100 py-4 text-neutral-900 transition-colors hover:bg-neutral-50"
           >
             <span className="text-sm">문장 복습</span>
-            <span className="text-xs text-neutral-400">→</span>
+            <span className="text-xs text-neutral-500">→</span>
           </Link>
 
           <Link
@@ -49,7 +49,7 @@ export default function Home() {
             className="flex items-center justify-between border-b border-neutral-100 py-4 text-neutral-900 transition-colors hover:bg-neutral-50"
           >
             <span className="text-sm">단어장</span>
-            <span className="text-xs text-neutral-400">→</span>
+            <span className="text-xs text-neutral-500">→</span>
           </Link>
 
           <Link
@@ -57,7 +57,7 @@ export default function Home() {
             className="flex items-center justify-between border-b border-neutral-100 py-4 text-neutral-900 transition-colors hover:bg-neutral-50"
           >
             <span className="text-sm">문법</span>
-            <span className="text-xs text-neutral-400">→</span>
+            <span className="text-xs text-neutral-500">→</span>
           </Link>
 
           <Link
@@ -65,7 +65,7 @@ export default function Home() {
             className="flex items-center justify-between border-b border-neutral-100 py-4 text-neutral-900 transition-colors hover:bg-neutral-50"
           >
             <span className="text-sm">통계</span>
-            <span className="text-xs text-neutral-400">→</span>
+            <span className="text-xs text-neutral-500">→</span>
           </Link>
 
           {FEATURES.upload && (
@@ -74,13 +74,13 @@ export default function Home() {
               className="flex items-center justify-between border-b border-neutral-100 py-4 text-neutral-900 transition-colors hover:bg-neutral-50"
             >
               <span className="text-sm">데이터</span>
-              <span className="text-xs text-neutral-400">→</span>
+              <span className="text-xs text-neutral-500">→</span>
             </Link>
           )}
         </nav>
 
         {/* Footer */}
-        <footer className="mt-20 text-[10px] text-neutral-300">
+        <footer className="mt-20 text-[10px] text-neutral-400">
           v1.3.0
         </footer>
       </main>

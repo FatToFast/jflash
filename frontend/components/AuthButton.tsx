@@ -126,7 +126,7 @@ export default function AuthButton() {
                   placeholder="다른 기기의 ID를 붙여넣기"
                   className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                 />
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-500">
                   다른 기기의 ID를 입력하면 해당 기기의 학습 데이터를 가져옵니다.
                 </p>
               </div>
