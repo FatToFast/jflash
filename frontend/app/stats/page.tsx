@@ -140,7 +140,7 @@ export default function StatsPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <main className="mx-auto max-w-sm px-6 py-12">
+      <main className="mx-auto max-w-2xl px-6 py-12">
         {/* Header */}
         <header className="mb-8">
           <Link

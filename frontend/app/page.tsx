@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * J-Flash Home Page
  * Minimal Japanese aesthetic - clean, spacious, functional
@@ -5,10 +7,16 @@
 
 import Link from "next/link";
 import { FEATURES } from "@/lib/config";
+import AuthButton from "@/components/AuthButton";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white relative">
+      {/* Sync Button - 우측 상단 */}
+      <div className="absolute top-4 right-4">
+        <AuthButton />
+      </div>
+
       <main className="mx-auto max-w-sm px-6 py-20">
         {/* Header */}
         <header className="mb-16">
