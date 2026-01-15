@@ -467,7 +467,7 @@ function ReviewPageContent() {
           <p className="mt-4 text-sm text-neutral-500">{currentCard.meaning}</p>
         )}
 
-        {/* Example sentence on front */}
+        {/* Example sentence on front (meaning hidden until flip) */}
         {!isSentenceMode && currentCard.example_sentence && (
           <button
             onClick={(e) => {
@@ -479,11 +479,6 @@ function ReviewPageContent() {
             <p className="text-sm text-neutral-700 leading-relaxed text-center">
               {currentCard.example_sentence}
             </p>
-            {currentCard.example_meaning && (
-              <p className="mt-1 text-xs text-neutral-500 text-center">
-                {currentCard.example_meaning}
-              </p>
-            )}
             <span className="block mt-1 text-xs text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity">
               🔊 예문 듣기
             </span>
