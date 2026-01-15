@@ -66,9 +66,9 @@ function ReviewPageContent() {
 
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  // JLPT+ style toggle controls
-  const [showMeaning, setShowMeaning] = useState(true);
-  const [showFurigana, setShowFurigana] = useState(true);
+  // JLPT+ style toggle controls (default: OFF - 탭하여 확인 후에만 힌트 표시)
+  const [showMeaning, setShowMeaning] = useState(false);
+  const [showFurigana, setShowFurigana] = useState(false);
   const [hideAllHints, setHideAllHints] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
@@ -472,17 +472,13 @@ function ReviewPageContent() {
     );
   };
 
-  // Render card back
+  // Render card back (정답 - 항상 읽기/뜻 표시)
   const renderBack = () => {
     if (!currentCard) return null;
 
-    // Effective states (hideAllHints overrides individual toggles)
-    const effectiveShowFurigana = showFurigana && !hideAllHints;
-    const effectiveShowMeaning = showMeaning && !hideAllHints;
-
     return (
       <div className="flex flex-col items-center justify-center h-full space-y-3">
-        {/* Clickable kanji with optional ruby furigana */}
+        {/* Clickable kanji with ruby furigana */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -490,7 +486,7 @@ function ReviewPageContent() {
           }}
           className="group hover:text-neutral-600 transition-colors"
         >
-          {effectiveShowFurigana && currentCard.reading ? (
+          {currentCard.reading ? (
             <ruby className={`${isSentenceMode ? "text-xl leading-relaxed text-center" : "text-3xl"}`}>
               {currentCard.kanji}
               <rt className="text-sm text-neutral-400">{currentCard.reading}</rt>
@@ -505,15 +501,8 @@ function ReviewPageContent() {
           </span>
         </button>
 
-        {/* Reading (separate line, if furigana is off but we want to show reading) */}
-        {!effectiveShowFurigana && currentCard.reading && (
-          <p className="text-lg text-neutral-500">{currentCard.reading}</p>
-        )}
-
-        {/* Meaning */}
-        {effectiveShowMeaning && (
-          <p className="text-base text-neutral-700">{currentCard.meaning}</p>
-        )}
+        {/* Meaning - 항상 표시 */}
+        <p className="text-base text-neutral-700">{currentCard.meaning}</p>
 
         {/* Feynman mode: show user's explanation and AI feedback */}
         {reviewMode === "feynman" && feynmanSubmitted && feynmanInput && (
