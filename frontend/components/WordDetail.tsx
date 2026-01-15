@@ -73,16 +73,20 @@ export function WordDetail({ word }: WordDetailProps) {
       </div>
 
       {/* Kanji Breakdown */}
-      {kanjiList.length > 0 && (
-        <div className="border-t border-neutral-100 pt-6">
-          <h3 className="text-sm font-medium text-neutral-600 mb-4">한자 분석</h3>
+      <div className="border-t border-neutral-100 pt-6">
+        <h3 className="text-sm font-medium text-neutral-600 mb-4">한자 분석</h3>
+        {kanjiList.length > 0 ? (
           <div className="space-y-4">
             {kanjiList.map((kanji) => (
               <KanjiCard key={kanji.character} kanji={kanji} />
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-neutral-400">
+            이 단어에는 한자가 포함되어 있지 않습니다.
+          </p>
+        )}
+      </div>
 
       {/* Example Sentence */}
       {word.example_sentence && (
@@ -152,6 +156,7 @@ export function WordDetail({ word }: WordDetailProps) {
  */
 function KanjiCard({ kanji }: { kanji: KanjiInfo }) {
   const [showDetails, setShowDetails] = useState(false);
+  const hasDetailedInfo = kanji.meanings_ko.length > 0 || kanji.on_readings.length > 0;
 
   return (
     <div className="border border-neutral-100 rounded-lg p-4">
@@ -162,54 +167,72 @@ function KanjiCard({ kanji }: { kanji: KanjiInfo }) {
         {/* Info */}
         <div className="flex-1 min-w-0">
           {/* Meanings */}
-          <p className="text-sm text-neutral-700">
-            {kanji.meanings_ko.join(", ")}
-          </p>
+          {hasDetailedInfo ? (
+            <>
+              <p className="text-sm text-neutral-700">
+                {kanji.meanings_ko.join(", ") || kanji.meanings.join(", ") || "의미 정보 없음"}
+              </p>
 
-          {/* Toggle details */}
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            className="mt-2 text-xs text-neutral-500 hover:text-neutral-600"
-          >
-            {showDetails ? "접기 ▲" : "상세 보기 ▼"}
-          </button>
+              {/* Toggle details */}
+              <button
+                onClick={() => setShowDetails(!showDetails)}
+                className="mt-2 text-xs text-neutral-500 hover:text-neutral-600"
+              >
+                {showDetails ? "접기 ▲" : "상세 보기 ▼"}
+              </button>
 
-          {/* Details */}
-          {showDetails && (
-            <div className="mt-3 space-y-2 text-xs">
-              {/* On readings */}
-              {kanji.on_readings.length > 0 && (
-                <div className="flex gap-2">
-                  <span className="text-neutral-500 w-12">음독:</span>
-                  <span className="text-neutral-700">
-                    {kanji.on_readings.join(", ")}
-                  </span>
+              {/* Details */}
+              {showDetails && (
+                <div className="mt-3 space-y-2 text-xs">
+                  {/* On readings */}
+                  {kanji.on_readings.length > 0 && (
+                    <div className="flex gap-2">
+                      <span className="text-neutral-500 w-12">음독:</span>
+                      <span className="text-neutral-700">
+                        {kanji.on_readings.join(", ")}
+                      </span>
+                    </div>
+                  )}
+                  {/* Kun readings */}
+                  {kanji.kun_readings.length > 0 && (
+                    <div className="flex gap-2">
+                      <span className="text-neutral-500 w-12">훈독:</span>
+                      <span className="text-neutral-700">
+                        {kanji.kun_readings.join(", ")}
+                      </span>
+                    </div>
+                  )}
+                  {/* Strokes */}
+                  {kanji.strokes > 0 && (
+                    <div className="flex gap-2">
+                      <span className="text-neutral-500 w-12">획수:</span>
+                      <span className="text-neutral-700">{kanji.strokes}획</span>
+                    </div>
+                  )}
+                  {/* JLPT Level */}
+                  {kanji.jlpt_level > 0 && (
+                    <div className="flex gap-2">
+                      <span className="text-neutral-500 w-12">레벨:</span>
+                      <span className="text-neutral-700">N{kanji.jlpt_level}</span>
+                    </div>
+                  )}
                 </div>
               )}
-              {/* Kun readings */}
-              {kanji.kun_readings.length > 0 && (
-                <div className="flex gap-2">
-                  <span className="text-neutral-500 w-12">훈독:</span>
-                  <span className="text-neutral-700">
-                    {kanji.kun_readings.join(", ")}
-                  </span>
-                </div>
-              )}
-              {/* Strokes */}
-              {kanji.strokes > 0 && (
-                <div className="flex gap-2">
-                  <span className="text-neutral-500 w-12">획수:</span>
-                  <span className="text-neutral-700">{kanji.strokes}획</span>
-                </div>
-              )}
-              {/* JLPT Level */}
-              {kanji.jlpt_level > 0 && (
-                <div className="flex gap-2">
-                  <span className="text-neutral-500 w-12">레벨:</span>
-                  <span className="text-neutral-700">N{kanji.jlpt_level}</span>
-                </div>
-              )}
-            </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-neutral-400">
+                상세 정보가 등록되지 않은 한자입니다.
+              </p>
+              <a
+                href={`https://jisho.org/search/${encodeURIComponent(kanji.character)}%20%23kanji`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-xs text-blue-500 hover:text-blue-600"
+              >
+                Jisho에서 보기 →
+              </a>
+            </>
           )}
         </div>
       </div>
