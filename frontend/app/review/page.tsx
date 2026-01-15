@@ -65,11 +65,6 @@ function ReviewPageContent() {
   });
 
   const [isSpeaking, setIsSpeaking] = useState(false);
-
-  // JLPT+ style toggle controls (default: OFF - 탭하여 확인 후에만 힌트 표시)
-  const [showMeaning, setShowMeaning] = useState(false);
-  const [showFurigana, setShowFurigana] = useState(false);
-  const [hideAllHints, setHideAllHints] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const [shuffleEnabled, setShuffleEnabled] = useState(() => {
@@ -439,7 +434,7 @@ function ReviewPageContent() {
     // normal & sentence
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        {/* Clickable word with optional furigana */}
+        {/* Word only (no furigana on front) */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -447,25 +442,13 @@ function ReviewPageContent() {
           }}
           className="group hover:text-neutral-600 transition-colors"
         >
-          {showFurigana && !hideAllHints && currentCard.reading ? (
-            <ruby className={`${isSentenceMode ? "text-xl leading-relaxed" : "text-4xl"}`}>
-              {currentCard.kanji}
-              <rt className="text-sm text-neutral-400">{currentCard.reading}</rt>
-            </ruby>
-          ) : (
-            <span className={`${isSentenceMode ? "text-xl leading-relaxed text-center" : "text-4xl"}`}>
-              {currentCard.kanji}
-            </span>
-          )}
+          <span className={`${isSentenceMode ? "text-xl leading-relaxed text-center" : "text-4xl"}`}>
+            {currentCard.kanji}
+          </span>
           <span className="block mt-1 text-xs text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity">
             🔊
           </span>
         </button>
-
-        {/* Meaning hint on front (optional) */}
-        {showMeaning && !hideAllHints && (
-          <p className="mt-4 text-sm text-neutral-500">{currentCard.meaning}</p>
-        )}
 
         {/* Example sentence on front (meaning hidden until flip) */}
         {!isSentenceMode && currentCard.example_sentence && (
@@ -747,41 +730,6 @@ function ReviewPageContent() {
                   width: `${((currentIndex + 1) / cards.length) * 100}%`,
                 }}
               />
-            </div>
-
-            {/* Toggle controls */}
-            <div className="flex items-center justify-between py-2">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowMeaning(!showMeaning)}
-                  className={`px-3 py-1.5 text-xs border rounded-full transition-colors ${
-                    showMeaning && !hideAllHints
-                      ? "border-neutral-900 bg-neutral-900 text-white"
-                      : "border-neutral-300 text-neutral-500 hover:border-neutral-400"
-                  }`}
-                >
-                  의미
-                </button>
-                <button
-                  onClick={() => setShowFurigana(!showFurigana)}
-                  className={`px-3 py-1.5 text-xs border rounded-full transition-colors ${
-                    showFurigana && !hideAllHints
-                      ? "border-neutral-900 bg-neutral-900 text-white"
-                      : "border-neutral-300 text-neutral-500 hover:border-neutral-400"
-                  }`}
-                >
-                  히라가나
-                </button>
-              </div>
-              <button
-                onClick={() => setHideAllHints(!hideAllHints)}
-                className={`p-2 text-lg transition-opacity ${
-                  hideAllHints ? "opacity-50" : "opacity-100"
-                }`}
-                title={hideAllHints ? "힌트 표시" : "힌트 숨기기"}
-              >
-                {hideAllHints ? "👁" : "👁‍🗨"}
-              </button>
             </div>
 
             {/* Card */}
