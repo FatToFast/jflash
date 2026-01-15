@@ -94,6 +94,7 @@ export type NavItem = {
 const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/review", label: "단어 복습", icon: "🎴", style: "primary" },
   { href: "/review?mode=sentence", label: "문장 복습", icon: "💬", style: "indigo" },
+  { href: "/kanji", label: "한자", icon: "字", style: "default" },
   { href: "/vocab", label: "단어장", icon: "📚", style: "default" },
   { href: "/grammar", label: "문법", icon: "📖", style: "purple" },
   { href: "/stats", label: "통계", icon: "📊", style: "emerald" },

@@ -32,6 +32,9 @@ import {
   scoreToEmoji,
   scoreToLabel,
 } from "@/lib/gemini";
+import { ProgressGauge } from "@/components/ProgressGauge";
+import { BottomSheet } from "@/components/BottomSheet";
+import { WordDetail } from "@/components/WordDetail";
 
 type SessionState = "loading" | "ready" | "studying" | "complete";
 type ReviewMode = "normal" | "reverse" | "listening" | "cloze" | "sentence" | "feynman";
@@ -62,6 +65,12 @@ function ReviewPageContent() {
   });
 
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // JLPT+ style toggle controls
+  const [showMeaning, setShowMeaning] = useState(true);
+  const [showFurigana, setShowFurigana] = useState(true);
+  const [hideAllHints, setHideAllHints] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const [shuffleEnabled, setShuffleEnabled] = useState(() => {
     if (typeof window !== "undefined") {
@@ -293,7 +302,11 @@ function ReviewPageContent() {
 
     if (reviewMode === "listening" && targetCards[0]) {
       setTimeout(() => {
-        speakJapanese(targetCards[0].kanji);
+        speakJapanese(targetCards[0].kanji, {
+          onStart: () => setIsSpeaking(true),
+          onEnd: () => setIsSpeaking(false),
+          onError: () => setIsSpeaking(false),
+        });
       }, 500);
     }
 
@@ -426,9 +439,34 @@ function ReviewPageContent() {
     // normal & sentence
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <p className={`${isSentenceMode ? "text-xl leading-relaxed text-center" : "text-4xl"}`}>
-          {currentCard.kanji}
-        </p>
+        {/* Clickable word with optional furigana */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            playPronunciation();
+          }}
+          className="group hover:text-neutral-600 transition-colors"
+        >
+          {showFurigana && !hideAllHints && currentCard.reading ? (
+            <ruby className={`${isSentenceMode ? "text-xl leading-relaxed" : "text-4xl"}`}>
+              {currentCard.kanji}
+              <rt className="text-sm text-neutral-400">{currentCard.reading}</rt>
+            </ruby>
+          ) : (
+            <span className={`${isSentenceMode ? "text-xl leading-relaxed text-center" : "text-4xl"}`}>
+              {currentCard.kanji}
+            </span>
+          )}
+          <span className="block mt-1 text-xs text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity">
+            🔊
+          </span>
+        </button>
+
+        {/* Meaning hint on front (optional) */}
+        {showMeaning && !hideAllHints && (
+          <p className="mt-4 text-sm text-neutral-500">{currentCard.meaning}</p>
+        )}
+
         <p className="mt-8 text-xs text-neutral-500">탭하여 확인</p>
       </div>
     );
@@ -438,13 +476,44 @@ function ReviewPageContent() {
   const renderBack = () => {
     if (!currentCard) return null;
 
+    // Effective states (hideAllHints overrides individual toggles)
+    const effectiveShowFurigana = showFurigana && !hideAllHints;
+    const effectiveShowMeaning = showMeaning && !hideAllHints;
+
     return (
       <div className="flex flex-col items-center justify-center h-full space-y-3">
-        <p className={`${isSentenceMode ? "text-xl leading-relaxed text-center" : "text-3xl"}`}>
-          {currentCard.kanji}
-        </p>
-        <p className="text-lg text-neutral-500">{currentCard.reading}</p>
-        <p className="text-base text-neutral-700">{currentCard.meaning}</p>
+        {/* Clickable kanji with optional ruby furigana */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            playPronunciation();
+          }}
+          className="group hover:text-neutral-600 transition-colors"
+        >
+          {effectiveShowFurigana && currentCard.reading ? (
+            <ruby className={`${isSentenceMode ? "text-xl leading-relaxed text-center" : "text-3xl"}`}>
+              {currentCard.kanji}
+              <rt className="text-sm text-neutral-400">{currentCard.reading}</rt>
+            </ruby>
+          ) : (
+            <span className={`${isSentenceMode ? "text-xl leading-relaxed text-center" : "text-3xl"}`}>
+              {currentCard.kanji}
+            </span>
+          )}
+          <span className="block mt-1 text-xs text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity">
+            🔊
+          </span>
+        </button>
+
+        {/* Reading (separate line, if furigana is off but we want to show reading) */}
+        {!effectiveShowFurigana && currentCard.reading && (
+          <p className="text-lg text-neutral-500">{currentCard.reading}</p>
+        )}
+
+        {/* Meaning */}
+        {effectiveShowMeaning && (
+          <p className="text-base text-neutral-700">{currentCard.meaning}</p>
+        )}
 
         {/* Feynman mode: show user's explanation and AI feedback */}
         {reviewMode === "feynman" && feynmanSubmitted && feynmanInput && (
@@ -650,9 +719,14 @@ function ReviewPageContent() {
           <div className="space-y-6">
             {/* Progress */}
             <div className="flex items-center justify-between text-xs text-neutral-500">
-              <span>
-                {currentIndex + 1} / {cards.length}
-              </span>
+              <div className="flex items-center gap-3">
+                <ProgressGauge
+                  current={currentIndex + 1}
+                  total={cards.length}
+                  size={40}
+                  strokeWidth={3}
+                />
+              </div>
               <span>
                 {sessionResult.correct}○ {sessionResult.incorrect}×
               </span>
@@ -666,6 +740,41 @@ function ReviewPageContent() {
                   width: `${((currentIndex + 1) / cards.length) * 100}%`,
                 }}
               />
+            </div>
+
+            {/* Toggle controls */}
+            <div className="flex items-center justify-between py-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowMeaning(!showMeaning)}
+                  className={`px-3 py-1.5 text-xs border rounded-full transition-colors ${
+                    showMeaning && !hideAllHints
+                      ? "border-neutral-900 bg-neutral-900 text-white"
+                      : "border-neutral-300 text-neutral-500 hover:border-neutral-400"
+                  }`}
+                >
+                  의미
+                </button>
+                <button
+                  onClick={() => setShowFurigana(!showFurigana)}
+                  className={`px-3 py-1.5 text-xs border rounded-full transition-colors ${
+                    showFurigana && !hideAllHints
+                      ? "border-neutral-900 bg-neutral-900 text-white"
+                      : "border-neutral-300 text-neutral-500 hover:border-neutral-400"
+                  }`}
+                >
+                  히라가나
+                </button>
+              </div>
+              <button
+                onClick={() => setHideAllHints(!hideAllHints)}
+                className={`p-2 text-lg transition-opacity ${
+                  hideAllHints ? "opacity-50" : "opacity-100"
+                }`}
+                title={hideAllHints ? "힌트 표시" : "힌트 숨기기"}
+              >
+                {hideAllHints ? "👁" : "👁‍🗨"}
+              </button>
             </div>
 
             {/* Card */}
@@ -682,16 +791,26 @@ function ReviewPageContent() {
               {!isFlipped ? renderFront() : renderBack()}
             </div>
 
-            {/* TTS button */}
-            {reviewMode !== "listening" && (
+            {/* Action buttons */}
+            <div className="flex items-center justify-between">
+              {reviewMode !== "listening" ? (
+                <button
+                  onClick={playPronunciation}
+                  disabled={isSpeaking}
+                  className="text-xs text-neutral-500 hover:text-neutral-600 transition-colors disabled:opacity-50"
+                >
+                  {isSpeaking ? "재생 중..." : "▶ 발음 듣기"}
+                </button>
+              ) : (
+                <div />
+              )}
               <button
-                onClick={playPronunciation}
-                disabled={isSpeaking}
-                className="text-xs text-neutral-500 hover:text-neutral-600 transition-colors disabled:opacity-50"
+                onClick={() => setIsDetailOpen(true)}
+                className="text-xs text-neutral-500 hover:text-neutral-600 transition-colors"
               >
-                {isSpeaking ? "재생 중..." : "▶ 발음 듣기"}
+                상세 보기 →
               </button>
-            )}
+            </div>
 
             {/* Answer buttons */}
             {isFlipped && (
@@ -712,6 +831,15 @@ function ReviewPageContent() {
                 </button>
               </div>
             )}
+
+            {/* Word Detail Bottom Sheet */}
+            <BottomSheet
+              isOpen={isDetailOpen}
+              onClose={() => setIsDetailOpen(false)}
+              title="단어 상세"
+            >
+              <WordDetail word={currentCard} />
+            </BottomSheet>
           </div>
         )}
 
