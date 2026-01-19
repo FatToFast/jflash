@@ -1,8 +1,9 @@
-"use client";
-
 /**
  * J-Flash Home Page
  * Minimal Japanese aesthetic - clean, spacious, functional
+ *
+ * Server Component for better performance (no client-side JS needed)
+ * AuthButton is a client component imported separately
  */
 
 import Link from "next/link";

@@ -4,11 +4,19 @@
  * Review Page - Minimal Japanese aesthetic
  * Clean flashcard interface with focus on content
  * + Feynman mode for deep learning
+ *
+ * Performance optimizations:
+ * - Dynamic imports for heavy components (BottomSheet, WordDetail)
+ * - Promise.all for parallel data fetching
+ * - Hoisted pure functions (shuffleArray, createClozeText)
+ * - Cached RegExp patterns
+ * - Set-based O(1) lookups
  */
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   VocabItem,
   VocabType,
@@ -26,15 +34,72 @@ import {
   FeynmanPrompt,
 } from "@/lib/learning-optimizer";
 import {
-  evaluateFeynmanExplanation,
   FeynmanFeedback,
   isGeminiEnabled,
   scoreToEmoji,
   scoreToLabel,
 } from "@/lib/gemini";
 import { ProgressGauge } from "@/components/ProgressGauge";
-import { BottomSheet } from "@/components/BottomSheet";
-import { WordDetail } from "@/components/WordDetail";
+
+// Dynamic imports for heavy components (bundle size optimization)
+const BottomSheet = dynamic(
+  () => import("@/components/BottomSheet").then((m) => m.BottomSheet),
+  { ssr: false }
+);
+const WordDetail = dynamic(
+  () => import("@/components/WordDetail").then((m) => m.WordDetail),
+  { ssr: false }
+);
+
+// Hoisted pure function: Fisher-Yates shuffle (avoids recreation on each render)
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// Cached RegExp patterns for createClozeText (avoids recreation on each call)
+const HIRAGANA_KATAKANA_SUFFIX = "[ぁ-んァ-ン]*";
+const KANJI_PATTERN = /[\u4e00-\u9faf]+/g;
+const ESCAPE_PATTERN = /[.*+?^${}()|[\]\\]/g;
+
+// Hoisted pure function: Create cloze text with cached patterns
+function createClozeText(sentence: string, word: string): string {
+  if (sentence.includes(word)) {
+    return sentence.replace(word, "___");
+  }
+  const kanjiOnly = word.match(KANJI_PATTERN)?.join("") || "";
+  if (kanjiOnly && sentence.includes(kanjiOnly)) {
+    const pattern = new RegExp(kanjiOnly + HIRAGANA_KATAKANA_SUFFIX);
+    return sentence.replace(pattern, "___");
+  }
+  const stem = word.slice(0, -1);
+  if (stem.length >= 2 && sentence.includes(stem)) {
+    const escaped = stem.replace(ESCAPE_PATTERN, "\\$&");
+    const pattern = new RegExp(escaped + HIRAGANA_KATAKANA_SUFFIX);
+    return sentence.replace(pattern, "___");
+  }
+  return sentence;
+}
+
+// Lazy-loaded Gemini evaluation (only loads when Feynman mode is used)
+async function evaluateFeynmanLazy(
+  kanji: string,
+  reading: string,
+  meaning: string,
+  input: string,
+  example?: string
+): Promise<FeynmanFeedback | null> {
+  try {
+    const { evaluateFeynmanExplanation } = await import("@/lib/gemini");
+    return evaluateFeynmanExplanation(kanji, reading, meaning, input, example);
+  } catch {
+    return null;
+  }
+}
 
 type SessionState = "loading" | "ready" | "studying" | "complete";
 type ReviewMode = "normal" | "reverse" | "listening" | "cloze" | "sentence" | "feynman";
@@ -83,7 +148,7 @@ function ReviewPageContent() {
 
   const currentCard = cards[currentIndex];
 
-  // Load cards
+  // Load cards with parallel fetching and Set-based deduplication
   const loadCards = useCallback(async () => {
     setSessionState("loading");
 
@@ -92,15 +157,23 @@ function ReviewPageContent() {
       runMigrationIfNeeded();
 
       const vocabType: VocabType = isSentenceMode ? "sentence" : "word";
-      const dueCards = await getDueCards(vocabType);
-      const newCards = await getNewCards(vocabType, 5);
 
+      // Parallel fetch (async-parallel optimization)
+      const [dueCards, newCards] = await Promise.all([
+        getDueCards(vocabType),
+        getNewCards(vocabType, 5),
+      ]);
+
+      // Set-based O(1) deduplication (js-set-map-lookups optimization)
       const allCards = [...dueCards];
-      newCards.forEach((card) => {
-        if (!allCards.find((c) => c.id === card.id)) {
+      const existingIds = new Set(dueCards.map((c) => c.id));
+
+      for (const card of newCards) {
+        if (!existingIds.has(card.id)) {
           allCards.push(card);
+          existingIds.add(card.id);
         }
-      });
+      }
 
       setCards(allCards);
       setDueCount(allCards.length);
@@ -118,16 +191,6 @@ function ReviewPageContent() {
   useEffect(() => {
     initializeVoices();
   }, []);
-
-  // Fisher-Yates shuffle
-  const shuffleArray = <T,>(array: T[]): T[] => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
 
   const flipCard = useCallback(() => {
     if (sessionState === "studying" && !isFlipped) {
@@ -189,25 +252,27 @@ function ReviewPageContent() {
     [currentCard, currentIndex, cards.length, isAnswering, reviewMode, cards]
   );
 
-  // Feynman mode: submit explanation with AI feedback
+  // Feynman mode: submit explanation with AI feedback (lazy-loaded Gemini)
   const handleFeynmanSubmit = useCallback(async () => {
     if (feynmanInput.trim().length < 2 || !currentCard) return;
 
     setFeynmanSubmitted(true);
     setIsFlipped(true);
 
-    // Call Gemini API for feedback if enabled
+    // Call Gemini API for feedback if enabled (lazy-loaded)
     if (isGeminiEnabled()) {
       setFeynmanLoading(true);
       try {
-        const feedback = await evaluateFeynmanExplanation(
+        const feedback = await evaluateFeynmanLazy(
           currentCard.kanji,
           currentCard.reading || "",
           currentCard.meaning || "",
           feynmanInput,
           currentCard.example_sentence || undefined
         );
-        setFeynmanFeedback(feedback);
+        if (feedback) {
+          setFeynmanFeedback(feedback);
+        }
       } catch (err) {
         console.error("Feynman feedback error:", err);
       } finally {
@@ -317,25 +382,6 @@ function ReviewPageContent() {
     sessionResult.total > 0
       ? Math.round((sessionResult.correct / sessionResult.total) * 100)
       : 0;
-
-  // 빈칸 예문 생성
-  const createClozeText = (sentence: string, word: string): string => {
-    if (sentence.includes(word)) {
-      return sentence.replace(word, "___");
-    }
-    const kanjiOnly = word.match(/[\u4e00-\u9faf]+/g)?.join("") || "";
-    if (kanjiOnly && sentence.includes(kanjiOnly)) {
-      const pattern = new RegExp(kanjiOnly + "[ぁ-んァ-ン]*");
-      return sentence.replace(pattern, "___");
-    }
-    const stem = word.slice(0, -1);
-    if (stem.length >= 2 && sentence.includes(stem)) {
-      const escaped = stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const pattern = new RegExp(escaped + "[ぁ-んァ-ン]*");
-      return sentence.replace(pattern, "___");
-    }
-    return sentence;
-  };
 
   // 모드 라벨
   const getModeLabel = (mode: ReviewMode): string => {

@@ -2,6 +2,10 @@
 
 /**
  * Vocabulary Page - Minimal Japanese aesthetic
+ *
+ * Performance optimizations:
+ * - useMemo for srsStates to avoid redundant localStorage reads
+ * - Existing useMemo for filtering/sorting preserved
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -13,6 +17,7 @@ import {
   loadAllMastered,
   loadAllVocabulary,
   getSRSStates,
+  SRSState,
 } from "@/lib/static-data";
 import { speakJapanese, initializeVoices } from "@/lib/tts";
 
@@ -30,6 +35,9 @@ export default function VocabPage() {
   const [sortOption, setSortOption] = useState<SortOption>("priority");
   const [page, setPage] = useState(1);
   const pageSize = 20;
+
+  // Cached SRS states (loaded once when vocabList changes)
+  const [srsStates, setSrsStates] = useState<Record<number, SRSState>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,6 +68,10 @@ export default function VocabPage() {
           break;
       }
       setVocabList(vocab);
+      // Load SRS states once after vocab is fetched (cached in state)
+      if (typeof window !== "undefined") {
+        setSrsStates(getSRSStates());
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -74,8 +86,6 @@ export default function VocabPage() {
   useEffect(() => {
     initializeVoices();
   }, []);
-
-  const srsStates = typeof window !== "undefined" ? getSRSStates() : {};
 
   const typeFilteredList = useMemo(() => {
     switch (filterType) {
